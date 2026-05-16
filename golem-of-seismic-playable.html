@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Golem of Seismic - Playable Prototype</title>
+    <link rel="stylesheet" href="./golem-of-seismic-playable.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Playable Local Prototype</p>
+          <h1>Golem of Seismic</h1>
+        </div>
+        <div class="status">
+          <div class="status-card">
+            <span class="label">Activated Chambers</span>
+            <strong id="progressValue">0 / 10</strong>
+          </div>
+          <div class="status-card">
+            <span class="label">Current Space</span>
+            <strong id="spaceName">Great Hall</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="play-area">
+        <canvas id="game" width="1280" height="720"></canvas>
+
+        <div id="papyrusOverlay" class="papyrus-overlay hidden" aria-hidden="true">
+          <article class="papyrus-sheet">
+            <button id="papyrusClose" class="papyrus-close" type="button">×</button>
+            <p id="papyrusEyebrow" class="papyrus-eyebrow">Archive Tablet</p>
+            <h2 id="papyrusTitle">Project Archive</h2>
+            <p id="papyrusIntro" class="papyrus-intro"></p>
+            <div id="papyrusBody" class="papyrus-body"></div>
+          </article>
+        </div>
+
+        <aside class="panel">
+          <div class="panel-block">
+            <p class="panel-eyebrow">How To Play</p>
+            <ul class="controls">
+              <li><kbd>WASD</kbd> hareket et</li>
+              <li><kbd>E</kbd> kapı / kitabe ile etkileş</li>
+              <li><kbd>Space</kbd> altar aktive et</li>
+              <li><kbd>Q</kbd> salona dön</li>
+            </ul>
+          </div>
+
+          <div class="panel-block">
+            <p class="panel-eyebrow">Current Focus</p>
+            <h2 id="roomTitle">Great Hall</h2>
+            <p id="roomSubtitle" class="muted">
+              Merkez sanctum içindesin. Bir kapıya yaklaş ve `E` ile chamber içine gir.
+            </p>
+          </div>
+
+          <div class="panel-block">
+            <p class="panel-eyebrow">Inscription</p>
+            <p id="inscriptionText" class="inscription">
+              Ten chambers wait in silence. Each door preserves one function of the network.
+            </p>
+          </div>
+
+          <div class="panel-block">
+            <p class="panel-eyebrow">System Note</p>
+            <p id="detailText" class="muted">
+              Tüm odaları aktive edince merkez çekirdeğe dönüp final mühürü açabilirsin.
+            </p>
+          </div>
+
+          <div id="promptBox" class="prompt">Bir kapıya yaklaş.</div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./golem-of-seismic-playable.js"></script>
+  </body>
+</html>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Golem of Seismic Overview</title>
+    <style>
+      :root {
+        --bg: #0d0b0e;
+        --panel: #171319;
+        --panel-2: #211a23;
+        --line: rgba(255, 220, 234, 0.12);
+        --text: #f6edf2;
+        --muted: #cab8c1;
+        --accent: #f0a9c8;
+        --accent-2: #ffe3ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top, rgba(240, 169, 200, 0.12), transparent 28%),
+          linear-gradient(180deg, #171218 0%, #0d0b0e 100%);
+      }
+
+      .shell {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 28px 18px 40px;
+      }
+
+      .hero,
+      .group,
+      .notes {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      }
+
+      .hero {
+        padding: 26px 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--accent-2);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 12px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(36px, 5vw, 62px);
+        line-height: 0.95;
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 72ch;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .group {
+        margin-top: 18px;
+        padding: 22px;
+      }
+
+      .group h2 {
+        margin: 0 0 14px;
+        font-size: 24px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      a.card {
+        display: block;
+        padding: 18px;
+        text-decoration: none;
+        color: inherit;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+
+      a.card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 227, 239, 0.24);
+        background: #291f2c;
+      }
+
+      .card-title {
+        margin: 0 0 8px;
+        color: var(--accent-2);
+        font-size: 18px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .notes {
+        margin-top: 18px;
+        padding: 20px 22px;
+      }
+
+      .notes p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Local Overview</p>
+        <h1>Golem of Seismic</h1>
+        <p class="lead">
+          Burada konuştuğumuz bütün ana tasarım paketi localde gezilebilir durumda. Bu sayfa oynanabilir
+          build değil; konsept, lore, oda mimarisi, pitch ve üretim planını tek yerden açman için bir overview.
+        </p>
+      </section>
+
+      <section class="group">
+        <h2>Playable</h2>
+        <div class="cards">
+          <a class="card" href="./golem-of-seismic-playable.html">
+            <h3 class="card-title">Playable Sanctum Prototype</h3>
+            <p>Great Hall içinde yürüyüp 10 oda gezeceğin küçük öğrenme odaklı local demo.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Master</h2>
+        <div class="cards">
+          <a class="card" href="./GOLEM_OF_SEISMIC_MASTER_GDD.md">
+            <h3 class="card-title">Master GDD</h3>
+            <p>Bütün ana kararları tek omurgada toplayan ana dosya.</p>
+          </a>
+          <a class="card" href="./GOLEM_OF_SEISMIC_ARCHITECTURE_PLAN.md">
+            <h3 class="card-title">Architecture Plan</h3>
+            <p>Great Hall, 4 kanat ve 10 odalı mabed yapısı.</p>
+          </a>
+          <a class="card" href="./GOLEM_OF_SEISMIC_ROOM_SCRIPTS.md">
+            <h3 class="card-title">Room Scripts</h3>
+            <p>Her odanın kitabeleri, küçük ritüeli ve öğrenme amacı.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Worldbuilding</h2>
+        <div class="cards">
+          <a class="card" href="./SEISMIC_GOLEM_LORE.md">
+            <h3 class="card-title">Lore Bible</h3>
+            <p>Seismic ağı, sanctum sistemi, golem ve çekirdeğin anlamı.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_CHARACTER_AND_INSCRIPTIONS.md">
+            <h3 class="card-title">Character & Inscriptions</h3>
+            <p>Seismic Golem geçmişi ve oyun içi yazıt tonu.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_NARRATIVE_DELIVERY.md">
+            <h3 class="card-title">Narrative Delivery</h3>
+            <p>Lore’un çevreye, ışığa ve ritüellere nasıl dağıtılacağı.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Experience</h2>
+        <div class="cards">
+          <a class="card" href="./SEISMIC_GOLEM_OPENING_10_MINUTES.md">
+            <h3 class="card-title">Opening 10 Minutes</h3>
+            <p>Açılış tonu ve ilk oynanış ritmi.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_PLAYABLE_WALKTHROUGH.md">
+            <h3 class="card-title">Playable Walkthrough</h3>
+            <p>30-45 dakikalık deneyimin baştan sona akışı.</p>
+          </a>
+          <a class="card" href="./GOLEM_OF_SEISMIC_PLAYER_JOURNEY.md">
+            <h3 class="card-title">Player Journey</h3>
+            <p>Oyuncunun mabetteki duygusal ve kavramsal yolculuğu.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Art & Feel</h2>
+        <div class="cards">
+          <a class="card" href="./SEISMIC_GOLEM_ART_DIRECTION.md">
+            <h3 class="card-title">Art Direction</h3>
+            <p>Genel görsel kural seti ve kaçınılacak şeyler.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_CONCEPT_ART_BRIEF.md">
+            <h3 class="card-title">Concept Art Brief</h3>
+            <p>Sahne sahne concept art için net brief.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_ART_PROMPTS.md">
+            <h3 class="card-title">Art Prompts</h3>
+            <p>Görsel üretim için prompt paketi.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_FEEL_BIBLE.md">
+            <h3 class="card-title">Feel Bible</h3>
+            <p>Kamera, ağırlık, ritim ve oyuncu hissi.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_CAMERA_AND_AUDIO_PLAN.md">
+            <h3 class="card-title">Camera & Audio</h3>
+            <p>Production tarafında uygulanabilir kamera ve ses planı.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Production</h2>
+        <div class="cards">
+          <a class="card" href="./GOLEM_OF_SEISMIC_ROOM_CATEGORIZATION.md">
+            <h3 class="card-title">Room Categorization</h3>
+            <p>10 odanın kategori yapısı ve neden o şekilde ayrıldığı.</p>
+          </a>
+          <a class="card" href="./GOLEM_OF_SEISMIC_PLAYER_JOURNEY.md">
+            <h3 class="card-title">Player Journey</h3>
+            <p>Oyuncunun salon ve odalar arasındaki öğrenme akışı.</p>
+          </a>
+          <a class="card" href="./golem-of-seismic-playable.html">
+            <h3 class="card-title">Current Playable Build</h3>
+            <p>Şu anki browser-playable sanctum slice.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Pitch</h2>
+        <div class="cards">
+          <a class="card" href="./SEISMIC_GOLEM_PITCH_DECK.md">
+            <h3 class="card-title">Pitch Deck</h3>
+            <p>8-10 slaytlık sunum omurgası.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_ONE_MINUTE_PITCH.md">
+            <h3 class="card-title">One Minute Pitch</h3>
+            <p>Oyunu kısa ve net anlatan tek paragraflık pitch.</p>
+          </a>
+          <a class="card" href="./SEISMIC_GOLEM_STORE_COPY.md">
+            <h3 class="card-title">Store Copy</h3>
+            <p>Short/long store description ve tagline seçenekleri.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="notes">
+        <p>
+          Bu sayfa overview için duruyor; oynanabilir build artık yukarıdaki playable kartından doğrudan açılabiliyor.
+        </p>
+      </section>
+    </main>
+  </body>
+  </html>
