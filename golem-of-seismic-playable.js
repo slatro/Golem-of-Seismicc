@@ -1388,8 +1388,8 @@ function openPapyrus() {
         <rect x="23" y="23" width="554" height="754" rx="8" fill="none" stroke="#00ffcc" stroke-width="1.2" opacity="0.15"/>
         <!-- Runic letters along borders -->
         <g fill="#00ffcc" opacity="0.45" font-family="monospace" font-size="9" font-weight="bold" letter-spacing="2">
-          <text x="50" y="21">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛗ ᛚ ᛜ ᛞ ᛟ</text>
-          <text x="50" y="789">ᛟ ᛞ ᛜ ᛚ ᛗ ᛒ ᛏ ᛊ ᛉ ᛈ ᛇ ᛃ ᛁ ᚾ ᚺ ᚹ ᚷ ᚲ ᚱ ᚨ ᚦ ᚢ ᚠ</text>
+          <text x="300" y="21" text-anchor="middle">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛗ ᛚ ᛜ ᛞ ᛟ</text>
+          <text x="300" y="789" text-anchor="middle">ᛟ ᛞ ᛜ ᛚ ᛗ ᛒ ᛏ ᛊ ᛉ ᛈ ᛇ ᛃ ᛁ ᚾ ᚺ ᚹ ᚷ ᚲ ᚱ ᚨ ᚦ ᚢ ᚠ</text>
         </g>
         <!-- Celtic knot corners -->
         <path d="M 23 55 L 55 23 M 23 65 L 65 23 M 23 75 L 75 23" stroke="#00ffcc" stroke-width="1.8" opacity="0.6" fill="none"/>
