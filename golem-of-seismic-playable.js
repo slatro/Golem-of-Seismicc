@@ -2487,7 +2487,7 @@ function drawThematicPlatformBackdrop(ctx, stage, time) {
     
     // Top-right
     ctx.moveTo(bx + bw * 0.7, cy);
-    ctx.lineTo(bx + bw);
+    ctx.lineTo(bx + bw, cy);
     ctx.lineTo(bx + bw, cy + bh * 0.35);
     
     // Bottom-left
