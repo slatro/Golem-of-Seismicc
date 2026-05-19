@@ -3,39 +3,244 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Golem of Seismic - Playable Prototype</title>
+    <title>Golem of the Seismic - Playable Prototype</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="./golem-of-seismic-playable.css?v=28" />
+    <link rel="stylesheet" href="./golem-of-seismic-playable.css?v=29" />
+    <style>
+      /* Play Overlay Styles */
+      .play-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 12, 18, 0.28); /* Translucent, not too dark, lets colorful details peak through! */
+        backdrop-filter: blur(12px); /* Soft bright blur exactly like the reference! */
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 30px;
+      }
+      .play-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .overlay-header {
+        position: absolute;
+        top: 30px;
+        text-align: center;
+      }
+      .vault-eyebrow {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.55);
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .vault-title {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 20px; /* Shrunk and modernized! */
+        color: #ffffff;
+        letter-spacing: 0.2em;
+        margin: 0;
+        font-weight: 800;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      }
+      .controls-card {
+        position: absolute;
+        top: 95px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 12px 24px;
+        width: 92%;
+        max-width: 540px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 10px;
+        column-gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.02);
+      }
+      .control-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .key-cap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 11px;
+        font-weight: bold;
+        font-family: monospace;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+      }
+      .key-cap.wide {
+        min-width: 60px;
+      }
+      .control-text {
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      .play-wrapper {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .circular-play-btn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08); /* Semi-translucent glass circle */
+        border: 2.5px solid rgba(255, 255, 255, 0.45);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 
+          0 10px 25px rgba(0, 0, 0, 0.35), 
+          inset 0 4px 10px rgba(255, 255, 255, 0.15), 
+          inset 0 -4px 10px rgba(0, 0, 0, 0.3); /* Premium 3D inner reflections! */
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        outline: none;
+        pointer-events: auto;
+      }
+      .circular-play-btn:hover {
+        transform: translate(-50%, -50%) scale(1.08);
+        background: rgba(255, 255, 255, 0.2);
+        border-color: #ffffff;
+        box-shadow: 
+          0 15px 35px rgba(255, 255, 255, 0.25), 
+          inset 0 4px 12px rgba(255, 255, 255, 0.2), 
+          inset 0 -4px 12px rgba(0, 0, 0, 0.4);
+      }
+      .circular-play-btn:active {
+        transform: translate(-50%, -50%) scale(0.96);
+      }
+      .play-icon {
+        width: 38px;
+        height: 38px;
+        margin-left: 3px; /* Shifted left as requested for perfect vertical/horizontal visual balance */
+        filter: drop-shadow(0px 3px 6px rgba(0, 255, 204, 0.45)); /* Premium cyan glow drop shadow */
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+      .circular-play-btn:hover .play-icon {
+        transform: scale(1.05);
+      }
+      .play-hint {
+        position: absolute;
+        top: calc(50% + 78px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 13px;
+        color: #ffffff;
+        letter-spacing: 0.15em;
+        font-weight: 800;
+        text-transform: uppercase;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+        animation: pulseHint 2s infinite ease-in-out;
+        pointer-events: auto;
+      }
+      @keyframes pulseHint {
+        0%, 100% { opacity: 0.7; }
+        50% { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
     <!-- Premium Interactive Brand Vaults Header -->
     <section id="logoDesk" class="logo-desk">
       <div class="logo-desk-title">
-        <span>🏛️ SEISMIC ECOSYSTEM BRAND VAULTS</span>
+        <span style="display: flex; align-items: center; gap: 8px;">
+          <img class="header-seismic-logo" src="./assets/crystal-hud.png" alt="Seismic Crystal Core" style="width: 22px; height: 22px; object-fit: contain; display: inline-block; vertical-align: middle;">
+          SEISMIC ECOSYSTEM
+        </span>
         <span class="logo-desk-hint">Teleport: Click (Platform) | Shift+Click (Sanctum)</span>
       </div>
       <div class="logo-desk-grid" id="logoDeskGrid"></div>
     </section>
-
     <main class="shell">
-      <section class="topbar">
-        <div>
-          <p class="eyebrow">Playable Local Prototype</p>
-          <h1>Golem of Seismic</h1>
-        </div>
-          <div class="status-card">
-            <span class="label">Current Stage</span>
-            <strong id="progressValue">1 / 10</strong>
-          </div>
-          <div class="status-card">
-            <span class="label">Location</span>
-            <strong id="spaceName">Stage 1: Brookwell</strong>
-          </div>
-        </div>
-      </section>
-
       <section class="play-area">
-        <canvas id="game" width="1280" height="720"></canvas>
+        <div id="gameContainer" style="position: relative; width: 100%; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34); border: 1px solid rgba(255, 228, 240, 0.08);">
+          <canvas id="game" width="1280" height="720" tabindex="0" style="outline: none;"></canvas>
+          
+          <button id="muteBtn" class="mute-btn" title="Toggle Sound">
+            <svg class="mute-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </button>
+          <div id="playOverlay" class="play-overlay">
+            <div class="overlay-header">
+              <span class="vault-eyebrow">AWAKEN THE SEISMIC CORE</span>
+              <h2 class="vault-title">HOW TO PLAY</h2>
+            </div>
+            
+            <div class="controls-card">
+              <div class="control-row">
+                <kbd class="key-cap">A</kbd>
+                <kbd class="key-cap">D</kbd>
+                <span class="control-text">Move Golem Left/Right</span>
+              </div>
+              <div class="control-row">
+                <kbd class="key-cap wide">Space</kbd>
+                <span class="control-text">Gravity Leap Jump</span>
+              </div>
+              <div class="control-row">
+                <kbd class="key-cap">E</kbd>
+                <span class="control-text">Read Lore Tablets</span>
+              </div>
+              <div class="control-row">
+                <kbd class="key-cap">F</kbd>
+                <span class="control-text">Shoot Seismic Pulse</span>
+              </div>
+            </div>
+
+            <div class="play-wrapper">
+              <button id="playBtn" class="circular-play-btn" title="Enter Vaults">
+                <svg class="play-icon" viewBox="0 0 24 24">
+                  <defs>
+                    <linearGradient id="cyberPlayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff" />
+                      <stop offset="60%" stop-color="#e0f7f4" />
+                      <stop offset="100%" stop-color="#80e5d6" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Outer glowing accent polygon -->
+                  <path d="M7.5 4.5 l12 7.5 l-12 7.5 z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-linejoin="round" opacity="0.95" />
+                  <!-- Inner solid polished 3D triangle -->
+                  <path d="M9 6.5 l8.8 5.5 l-8.8 5.5 z" fill="url(#cyberPlayGrad)" stroke="rgba(255,255,255,0.6)" stroke-width="0.5" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <span class="play-hint">TAP TO PLAY!</span>
+            </div>
+          </div>
+          <!-- Interactive Action Prompt HUD Overlay -->
+          <div id="promptBox" class="prompt"></div>
+        </div>
 
         <div id="papyrusOverlay" class="papyrus-overlay hidden" aria-hidden="true">
           <article class="papyrus-sheet">
@@ -49,31 +254,112 @@
         </div>
 
         <aside class="panel">
-          <div class="panel-block">
-            <p class="panel-eyebrow">How To Play</p>
-            <ul class="controls">
-              <li><kbd>A</kbd> <kbd>D</kbd> Move Left / Right</li>
-              <li><kbd>Space</kbd> Jump</li>
-              <li><kbd>E</kbd> Interact with Portal / Monument</li>
-            </ul>
+          <!-- Arched Gold Plaque Header (Reference Alignment) -->
+          <div class="panel-header-banner">
+            Golem of the Seismic
           </div>
 
-          <div class="panel-block">
-            <p class="panel-eyebrow">Current Focus</p>
-            <h2 id="roomTitle">Brookwell</h2>
-            <p id="roomSubtitle" class="muted">
-              The journey has begun. Scale the platforms and reach the sacred lore.
-            </p>
+          <!-- Elegant Corner Rivets (Medieval gold board aesthetic) -->
+          <div class="rivet tl"></div>
+          <div class="rivet tr"></div>
+          <div class="rivet bl"></div>
+          <div class="rivet br"></div>
+          
+          <!-- State 1: Main Menu Stack -->
+          <div id="panelMenuStack" class="panel-state-view">
+            <div class="menu-buttons-stack">
+              <button id="menuPlayBtn" class="menu-btn-gold">PLAY</button>
+              <button id="menuReplayBtn" class="menu-btn-gold">REPLAY</button>
+              <button id="menuInfoBtn" class="menu-btn-gold">INFO</button>
+              <button id="menuStagesBtn" class="menu-btn-gold">STAGES</button>
+              <button id="menuOptionsBtn" class="menu-btn-gold">OPTIONS</button>
+              <button id="menuQuitBtn" class="menu-btn-gold">QUIT</button>
+            </div>
           </div>
 
-          <div class="panel-block">
-            <p class="panel-eyebrow">Objective</p>
-            <p id="inscriptionText" class="inscription">
-              Reach the end and read all archives to proceed to the next stage.
-            </p>
+          <!-- State 2: Info View Panel -->
+          <div id="panelInfoBlock" class="panel-state-view hidden">
+            <div class="panel-header-banner sub-banner" style="position: relative !important; margin: 5px auto !important; width: fit-content !important; transform: none !important; left: auto !important; top: auto !important;">GAME INFO</div>
+            
+            <div class="panel-scroll-area">
+              <div class="panel-block">
+                <p class="panel-eyebrow">HOW TO PLAY</p>
+                <ul class="controls-list">
+                  <li><kbd class="mini-key">A</kbd> <kbd class="mini-key">D</kbd> <span class="lbl">Move Left / Right</span></li>
+                  <li><kbd class="mini-key wide">Space</kbd> <span class="lbl">Jump Leap</span></li>
+                  <li><kbd class="mini-key">E</kbd> <span class="lbl">Interact with Portal / Monument</span></li>
+                </ul>
+              </div>
+
+              <div class="panel-block">
+                <p class="panel-eyebrow">CURRENT LOCATION</p>
+                <h2 id="spaceName" class="focus-title" style="font-size: 18px; margin-top: 5px;">Stage 1: Brookwell</h2>
+                <div id="roomTitle" style="font-size: 12px; color: #ecd685; font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">The Journey</div>
+                <div style="margin-top: 6px; font-size: 11px; color: #e3d2c1; font-weight: 900; letter-spacing: 0.05em; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                  VAULT PROGRESSION: <span id="progressValue">1 / 11</span>
+                </div>
+                <p id="roomSubtitle" class="focus-subtitle" style="margin-top: 8px; border-top: 1px dashed rgba(236, 214, 133, 0.2); padding-top: 8px; font-size: 11px;">Navigate the hurdles, reach the sanctuary gate.</p>
+              </div>
+
+              <div class="panel-block">
+                <p class="panel-eyebrow">OBJECTIVE</p>
+                <p id="inscriptionText" class="inscription-body" style="font-size: 11.5px;">Explore the cavern, scale the platforms, and reach the sanctuary gateway.</p>
+              </div>
+            </div>
+
+            <button id="panelInfoBackBtn" class="menu-btn-gold back-btn" style="margin-top: 15px; padding: 10px 20px; font-size: 12px; border-radius: 12px !important;">BACK</button>
           </div>
 
-          <div id="promptBox" class="prompt">Use A/D to Move. Space to Jump.</div>
+          <!-- State 3: Stages View Panel -->
+          <div id="panelStagesBlock" class="panel-state-view hidden">
+            <div class="panel-header-banner sub-banner" style="position: relative !important; margin: 5px auto !important; width: fit-content !important; transform: none !important; left: auto !important; top: auto !important;">SELECT STAGE</div>
+            
+            <div class="panel-scroll-area" style="max-height: 350px !important;">
+              <div class="stages-list-single" id="panelStagesList">
+                <!-- Dynamically populated and rendered in real-time -->
+              </div>
+            </div>
+
+            <button id="panelStagesBackBtn" class="menu-btn-gold back-btn" style="margin-top: 15px; padding: 10px 20px; font-size: 12px; border-radius: 12px !important;">BACK</button>
+          </div>
+
+          <!-- State 4: Options View Panel -->
+          <div id="panelOptionsBlock" class="panel-state-view hidden">
+            <div class="panel-header-banner sub-banner" style="position: relative !important; margin: 5px auto !important; width: fit-content !important; transform: none !important; left: auto !important; top: auto !important;">OPTIONS</div>
+            
+            <div class="panel-scroll-area">
+              <div class="panel-block">
+                <p class="panel-eyebrow">SOUND & MUSIC</p>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11.5px; color: #e3d2c1;">Music Volume</span>
+                    <span id="volVal" style="font-size: 11.5px; color: #ecd685; font-weight: bold;">80%</span>
+                  </div>
+                  <input type="range" id="volSlider" min="0" max="100" value="80" style="width: 100%; accent-color: #ecd685; cursor: pointer; outline: none; background: rgba(0,0,0,0.4); border-radius: 4px; height: 6px;">
+                </div>
+              </div>
+
+              <div class="panel-block">
+                <p class="panel-eyebrow">GRAPHICS EFFECTS</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11.5px; color: #e3d2c1;">Particles Density</span>
+                    <select id="particleDensitySelect" style="background: #2b1712; border: 1.5px solid #ecd685; color: #ecd685; font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer; outline: none; font-family: Georgia, serif;">
+                      <option value="high" selected>High (Cinematic)</option>
+                      <option value="medium">Medium (Standard)</option>
+                      <option value="low">Low (Performance)</option>
+                    </select>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11.5px; color: #e3d2c1;">Screenshake Effect</span>
+                    <input type="checkbox" id="screenshakeToggle" checked style="width: 16px; height: 16px; accent-color: #ecd685; cursor: pointer;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button id="panelOptionsBackBtn" class="menu-btn-gold back-btn" style="margin-top: 15px; padding: 10px 20px; font-size: 12px; border-radius: 12px !important;">BACK</button>
+          </div>
         </aside>
       </section>
     </main>

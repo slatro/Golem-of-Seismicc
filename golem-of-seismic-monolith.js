@@ -8,6 +8,9 @@ const roomSubtitle = document.getElementById("roomSubtitle");
 const inscriptionText = document.getElementById("inscriptionText");
 const detailText = document.getElementById("detailText");
 const promptBox = document.getElementById("promptBox");
+let particleDensity = "high";
+let screenshakeEnabled = true;
+
 
 const papyrusOverlay = document.getElementById("papyrusOverlay");
 const papyrusClose = document.getElementById("papyrusClose");
@@ -19,6 +22,11 @@ const crystalImage = new Image();
 let crystalReady = false;
 crystalImage.src = "./crystal-reference.png";
 crystalImage.onload = () => { crystalReady = true; };
+
+const crystalHudImage = new Image();
+let crystalHudReady = false;
+crystalHudImage.src = "./assets/crystal-hud.png";
+crystalHudImage.onload = () => { crystalHudReady = true; };
 
 const ROOMS = [
   {
@@ -41,7 +49,7 @@ const ROOMS = [
     name: "Avvio",
     wing: "Accounts & Access",
     subtitle: "Modular Multi-Threshold Account Abstraction Enclave",
-    portalCore: "#67cfff",
+    portalCore: "#bcff00",
     archiveSections: [
       {
         title: "The Vision",
@@ -57,7 +65,7 @@ const ROOMS = [
     name: "Via",
     wing: "Accounts & Access",
     subtitle: "Confidential Capital Routing and Cross-Border Transfer Rails",
-    portalCore: "#ff5ca8",
+    portalCore: "#f5f5f7",
     archiveSections: [
       {
         title: "The Vision",
@@ -73,7 +81,7 @@ const ROOMS = [
     name: "Shift",
     wing: "Accounts & Access",
     subtitle: "Shielded Regulatory Compliance and Identity Registry",
-    portalCore: "#8e72ff",
+    portalCore: "#ffffff",
     archiveSections: [
       {
         title: "The Vision",
@@ -89,7 +97,7 @@ const ROOMS = [
     name: "Blend",
     wing: "Treasury & Yield",
     subtitle: "Non-Custodial Corporate Treasury and Shielded Yield Optimizer",
-    portalCore: "#5f7dff",
+    portalCore: "#6eb860",
     archiveSections: [
       {
         title: "The Vision",
@@ -105,7 +113,7 @@ const ROOMS = [
     name: "Promis",
     wing: "Treasury & Yield",
     subtitle: "Real-World Asset (RWA) Tokenization and Compliant Yield Engine",
-    portalCore: "#9acb64",
+    portalCore: "#d1d5db",
     archiveSections: [
       {
         title: "The Vision",
@@ -121,7 +129,7 @@ const ROOMS = [
     name: "Vend",
     wing: "Payments & Commerce",
     subtitle: "Shielded Decoupled E-Commerce and Point-of-Sale (POS) Engine",
-    portalCore: "#ff8c3e",
+    portalCore: "#3eb0f7",
     archiveSections: [
       {
         title: "The Vision",
@@ -137,7 +145,7 @@ const ROOMS = [
     name: "DashX",
     wing: "Payments & Commerce",
     subtitle: "Shielded programmatic Marketing, Rewards, and Payout Stack",
-    portalCore: "#ff6277",
+    portalCore: "#3d6bff",
     archiveSections: [
       {
         title: "The Vision",
@@ -169,7 +177,7 @@ const ROOMS = [
     name: "Port Markets",
     wing: "Settlement & Markets",
     subtitle: "Shielded Institutional Liquidity Pools and Slippage-Free Order Routing",
-    portalCore: "#d7a45b",
+    portalCore: "#b5b5b5",
     archiveSections: [
       {
         title: "The Vision",
@@ -178,6 +186,22 @@ const ROOMS = [
       {
         title: "Core Mechanics",
         body: "On public ledgers, massive trade executions trigger sandwich attacks and front-running bots that extract value from traders. Port Markets hosts limit orders, trade sizes, and execution profiles inside Seismic's secure enclave execution enclaves. Traders receive fair, instant matching and absolute pricing execution without leaking trade intent to front-runners."
+      }
+    ]
+  },
+  {
+    name: "Sedona",
+    wing: "Wealth & Privacy",
+    subtitle: "Privacy-Enabled Encrypted Finance and Auto-Yield Rebalancing",
+    portalCore: "#ef5f00",
+    archiveSections: [
+      {
+        title: "The Vision",
+        body: "Sedona abstracts the massive friction of zero-knowledge privacy and regulatory compliance, enabling private trading, yield generation, and cross-border transfers in a single on-chain encrypted wallet."
+      },
+      {
+        title: "Core Mechanics",
+        body: "Utilizing zero-knowledge verification enclaves in the background, Sedona encrypts all user balances, positions, and trades on-chain. Funds are automatically allocated and dynamically rebalanced into the highest-yielding verified pools in the Seismic network."
       }
     ]
   },
@@ -201,10 +225,421 @@ const ROOMS = [
 
 const keys = new Set();
 window.addEventListener("keydown", (e) => {
+  if (typeof wakeUpAudio === "function") wakeUpAudio();
+  if (!gameStarted) return;
+  
+  // Prevent spacebar or arrow keys from triggering browser scrolling or active element click!
+  if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    e.preventDefault();
+  }
+  
   keys.add(e.key.toLowerCase());
   if(e.key.toLowerCase() === 'e') tryInteract();
 });
-window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+window.addEventListener("keyup", (e) => {
+  if (!gameStarted) return;
+  keys.delete(e.key.toLowerCase());
+});
+
+
+// ==========================================================
+class AncientSoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.masterGain = null;
+    this.muted = false;
+    this.volumeFraction = 0.8; // default volume fraction (80%)
+    
+    // HTML5 Audio for high-fidelity loop playback of the user's MP3 file
+    this.bgMusic = new Audio("./assets/egyptian-desert.mp3");
+    this.bgMusic.loop = true;
+    this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+  }
+  
+  init() {
+    if (this.ctx) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioContextClass();
+      if (this.ctx.state === "suspended") {
+        this.ctx.resume();
+      }
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(this.muted ? 0 : (this.volumeFraction * 0.35), this.ctx.currentTime);
+      this.masterGain.connect(this.ctx.destination);
+      
+      // Start the actual high-fidelity MP3 background music loop!
+      this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+      this.bgMusic.play().catch(e => console.log("Background music autoplay blocked:", e));
+    } catch (e) {
+      console.warn("Failed to initialize sound engine context:", e);
+    }
+  }
+  
+  toggleMute() {
+    this.init();
+    this.muted = !this.muted;
+    
+    if (this.masterGain && this.ctx) {
+      const targetVol = this.muted ? 0.0 : (this.volumeFraction * 0.35);
+      this.masterGain.gain.setValueAtTime(targetVol, this.ctx.currentTime);
+    }
+    
+    if (this.bgMusic) {
+      this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+      if (this.muted) {
+        this.bgMusic.pause();
+      } else {
+        this.bgMusic.play().catch(e => {});
+      }
+    }
+    
+    return this.muted;
+  }
+
+  setVolume(vol) {
+    this.init();
+    this.volumeFraction = vol;
+    
+    if (this.masterGain && this.ctx) {
+      const targetVol = this.muted ? 0.0 : (this.volumeFraction * 0.35);
+      this.masterGain.gain.setValueAtTime(targetVol, this.ctx.currentTime);
+    }
+    
+    if (this.bgMusic) {
+      this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+    }
+  }
+  
+  stop() {
+    if (this.bgMusic) {
+      this.bgMusic.pause();
+      this.bgMusic.currentTime = 0;
+    }
+    if (this.ctx) {
+      try { this.ctx.close(); } catch(e) {}
+      this.ctx = null;
+    }
+  }
+  
+  playCollect() {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    
+    // Ancient crystal bell chime / energy core harvest sound
+    const rootFreq = 523.25; // C5
+    
+    [1.0, 1.5, 2.0, 2.5].forEach((mult, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(rootFreq * mult, now);
+      
+      const gain = ctx.createGain();
+      const decay = 1.4 / (i + 1);
+      gain.gain.setValueAtTime(0.12 / (i + 1), now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+      
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + decay);
+    });
+  }
+  
+  playJump() {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    
+    // Heavy wind sweep / Golem levitation rumble
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(250, now);
+    filter.frequency.exponentialRampToValueAtTime(80, now + 0.35);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+
+  playLand() {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    
+    // Massive stone thud impact
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(20, now + 0.22);
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(120, now);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.22);
+    
+    // White noise friction burst for stone dust crumble
+    try {
+      const bufferSize = ctx.sampleRate * 0.2; // 0.2s noise burst
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(160, now);
+      noiseFilter.Q.setValueAtTime(2.0, now);
+      
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.18, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.masterGain);
+      noise.start(now);
+    } catch(err){}
+  }
+  
+  playShoot() {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    
+    // Synthesized heavy stone launch/fire projectile
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.25);
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+  
+  playDeath() {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    
+    // Ancient monolith stone crumble decay
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(75, now);
+    osc.frequency.linearRampToValueAtTime(10, now + 0.95);
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, now);
+    filter.frequency.exponentialRampToValueAtTime(40, now + 0.95);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.45, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.95);
+    
+    // High-pitched crystal shatter ring
+    const shatter = ctx.createOscillator();
+    shatter.type = 'triangle';
+    shatter.frequency.setValueAtTime(380, now);
+    shatter.frequency.linearRampToValueAtTime(80, now + 0.65);
+    
+    const shGain = ctx.createGain();
+    shGain.gain.setValueAtTime(0.16, now);
+    shGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+    
+    shatter.connect(shGain);
+    shGain.connect(this.masterGain);
+    
+    shatter.start(now);
+    shatter.stop(now + 0.65);
+  }
+}
+
+// Breathtaking Tab Panel Routing
+window.switchTab = function(tabId) {
+  const tabInfo = document.getElementById("tabInfo");
+  const tabStages = document.getElementById("tabStages");
+  const tabInfoBtn = document.getElementById("tabInfoBtn");
+  const tabStagesBtn = document.getElementById("tabStagesBtn");
+  
+  if (!tabInfo || !tabStages || !tabInfoBtn || !tabStagesBtn) return;
+  
+  // Instantly remove focus so spacebar never triggers active clicks!
+  tabInfoBtn.blur();
+  tabStagesBtn.blur();
+  
+  if (tabId === 'info') {
+    tabInfo.classList.remove("hidden");
+    tabStages.classList.add("hidden");
+    tabInfoBtn.classList.add("active");
+    tabStagesBtn.classList.remove("active");
+  } else {
+    tabInfo.classList.add("hidden");
+    tabStages.classList.remove("hidden");
+    tabInfoBtn.classList.remove("active");
+    tabStagesBtn.classList.add("active");
+    
+    // Render/Update Mini Logo canvases inside stages tab
+    if (typeof initStagesPanel === 'function') initStagesPanel();
+  }
+  
+  if (audioEngine) audioEngine.playCollect(); // feedback click
+};
+
+// Dynamic Stage Teleport Chapters List Builder
+window.initStagesPanel = function() {
+  const list = document.getElementById("panelStagesList");
+  if (!list) return;
+  list.innerHTML = "";
+  
+  ROOMS.forEach((room, index) => {
+    const stageNum = index + 1;
+    const isActive = (index === currentStage);
+    
+    const item = document.createElement("div");
+    item.className = `stage-item ${isActive ? 'active' : ''}`;
+    item.onclick = () => {
+      // Remove button focus instantly!
+      item.blur();
+      
+      if (!gameStarted) return;
+      currentStage = index;
+      inInterior = false;
+      chestOpened = false;
+      chestGemY = 0;
+      golemEmpowered = false;
+      initStage();
+      
+      if (audioEngine) audioEngine.playCollect();
+      
+      // Update sidebar active highlights
+      const items = list.querySelectorAll(".stage-item");
+      items.forEach(el => el.classList.remove("active"));
+      item.classList.add("active");
+    };
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    canvas.className = "stage-mini-logo";
+    
+    const textGroup = document.createElement("div");
+    textGroup.className = "stage-text-group";
+    
+    const subtitle = document.createElement("span");
+    subtitle.className = "stage-subtitle";
+    subtitle.innerText = `Stage ${stageNum}`;
+    
+    const title = document.createElement("span");
+    title.className = "stage-title";
+    title.innerText = room.name;
+    
+    textGroup.appendChild(subtitle);
+    textGroup.appendChild(title);
+    
+    item.appendChild(canvas);
+    item.appendChild(textGroup);
+    list.appendChild(item);
+    
+    // Draw mini brand logo dynamically! (Centered and padded perfectly to fit 32x32 block)
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, 32, 32);
+    ctx.save();
+    ctx.translate(16, 16);
+    ctx.scale(0.38, 0.38); // Scaled perfectly inside 32x32 bounding box!
+    drawBrandLogo(ctx, -32, -32, index, 0);
+    ctx.restore();
+  });
+};
+
+// Global Audio Wake-up function to securely bypass Chrome/Safari autoplay policies
+window.wakeUpAudio = function() {
+  if (audioEngine) {
+    if (!audioEngine.ctx) {
+      audioEngine.init();
+    } else if (audioEngine.ctx.state === "suspended") {
+      audioEngine.ctx.resume();
+    }
+  }
+};
+
+// Mute Toggle Button State Switcher
+window.toggleMuteState = function() {
+  const btn = document.getElementById("muteBtn");
+  if (!btn) return;
+  
+  // Remove button focus instantly!
+  btn.blur();
+  
+  if (!audioEngine) {
+    audioEngine = new AncientSoundEngine();
+  }
+  
+  const isMuted = audioEngine.toggleMute();
+  
+  if (isMuted) {
+    btn.innerHTML = `
+      <svg class="mute-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+      </svg>
+    `;
+    btn.classList.add("muted");
+  } else {
+    btn.innerHTML = `
+      <svg class="mute-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+      </svg>
+    `;
+    btn.classList.remove("muted");
+  }
+};
 
 // ==========================================
 // CENTRAL BRAND LOGO RENDERING ENGINE
@@ -246,6 +681,14 @@ function drawBrandLogo(ctx, px, py, stageIndex, time) {
     glowColorStr = "255, 255, 255"; // Bright White glow
     fillColor = "transparent";      // Bypass global fill (drawn explicitly)
     sparkColor = "#ffffff";         // White sparks
+  } else if (stageIndex === 10) { // Sedona (Official Orange Dual Ribbon)
+    glowColorStr = "239, 95, 0";   // Vibrant Sedona energetic orange glow (rgb of #EF5F00)
+    fillColor = "transparent";
+    sparkColor = "#ef5f00";         // Sedona orange sparks
+  } else if (stageIndex === 11) { // Seismic (Pink Gem)
+    glowColorStr = "255, 120, 180"; // Neon pink glow
+    fillColor = "transparent";
+    sparkColor = "rgba(255, 120, 180, 0.9)";
   }
   
   ctx.shadowColor = `rgba(${glowColorStr}, ${pulse})`;
@@ -502,7 +945,12 @@ function drawBrandLogo(ctx, px, py, stageIndex, time) {
       ctx.bezierCurveTo(px + 36, py + 33, px + 28, py + 35, px + 22, py + 34); // Inner top edge back to left tip
       ctx.closePath();
       break;
-    case 9: // Portmarket (Opposite angled chevrons - scaled down to fit pedestal)
+    case 9: // Portmarket (Opposite angled chevrons - shifted back to 9)
+      glowColorStr = "181, 181, 181"; // Light silver/gray glow
+      sparkColor = "rgba(181, 181, 181, 0.9)";
+      ctx.shadowColor = `rgba(181, 181, 181, ${pulse})`;
+      fillColor = "transparent"; // We draw shapes manually!
+      
       ctx.save();
       ctx.translate(px + 32, py + 27);
       ctx.scale(0.72, 0.72);
@@ -538,39 +986,66 @@ function drawBrandLogo(ctx, px, py, stageIndex, time) {
 
       ctx.beginPath();
       break;
-    case 10: // Seismic - Low Poly Pink Gemstone
-      glowColorStr = "255, 120, 180"; // Bright neon pink glow
-      sparkColor = "rgba(255, 120, 180, 0.9)";
-      ctx.shadowColor = `rgba(255, 120, 180, ${pulse})`;
+     case 10: // Sedona: Official interlocking ribbon SVG logo
+      ctx.save();
+      ctx.translate(px + 21, py + 18); // Centered and scaled to match other project logos
+      ctx.scale(0.72, 0.72);
+      ctx.shadowColor = "#ef5f00";
+      ctx.shadowBlur = 10;
       
-      const drawFacet = (pts, color) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(px + pts[0][0], py + pts[0][1]);
-        for(let i=1; i<pts.length; i++) ctx.lineTo(px + pts[i][0], py + pts[i][1]);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.25)";
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      };
+      const sedonaPath = new Path2D("M16.2985 23.1816L11.5731 28.9911C11.1124 29.5575 10.3809 29.8584 9.68149 29.6492C7.65653 29.0438 5.90148 27.6684 4.81824 25.7566L1.11685 19.2339C-0.369679 16.6164 -0.369679 13.3793 1.11685 10.7618L4.81824 4.23912C6.30477 1.61548 9.05693 0 12.03 0H16.1194C14.7028 0 15.4308 0 16.5838 0C17.5731 0 17.999 1.25545 17.213 1.85615L11.2897 6.38297C8.79426 8.28997 8.70471 12.0675 11.1046 14.0899L15.8329 18.08C17.3433 19.3554 17.5522 21.6329 16.2985 23.1755V23.1816ZM30.3519 10.7618L26.6505 4.23912C25.6993 2.56517 24.2408 1.30334 22.5347 0.607934C21.5033 0.18754 20.37 0.646905 19.6637 1.50808L14.8836 7.33647C13.618 8.873 13.827 11.1626 15.3433 12.438L20.0298 16.3977C22.4357 18.4323 22.3402 22.222 19.8268 24.1229L14.5256 28.1302C13.7343 28.7284 14.1573 29.9897 15.1494 29.9897H19.4387C22.4178 29.9897 25.164 28.3742 26.6505 25.7505L30.3519 19.2279C31.8384 16.6103 31.8384 13.3733 30.3519 10.7557V10.7618Z");
       
-      // Main front facing large polygon
-      drawFacet([[20, 24], [36, 16], [46, 30], [32, 46], [16, 34]], "#c67a92"); 
-      // Top left polygon
-      drawFacet([[26, 10], [36, 16], [20, 24]], "#dba2b6");
-      // Top right polygon
-      drawFacet([[36, 16], [42, 12], [46, 30]], "#954963");
-      // Bottom right polygon
-      drawFacet([[46, 30], [38, 48], [32, 46]], "#71304a");
-      // Bottom left polygon
-      drawFacet([[32, 46], [26, 52], [16, 34]], "#8c3b5a");
-      // Far left polygon
-      drawFacet([[16, 34], [10, 26], [20, 24]], "#a35470");
-      // Upper far left polygon
-      drawFacet([[10, 26], [26, 10], [20, 24]], "#b26480");
-
+      // Fill with Sedona high-energy orange (#EF5F00)
+      ctx.fillStyle = "#ef5f00";
+      ctx.fill(sedonaPath);
+      
+      // Add a clean white outline
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke(sedonaPath);
+      
       ctx.restore();
+      ctx.beginPath();
+      break;
+    case 11: // Seismic - Official Wavy Curvy "S" Logo
+      glowColorStr = "255, 255, 255"; // Pure platinum white glow
+      sparkColor = "rgba(255, 255, 255, 0.95)";
+      ctx.shadowColor = `rgba(255, 255, 255, ${pulse})`;
+      
+      // Draw wavy "S" vector path
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      
+      // Halo pink backing shadow
+      ctx.shadowColor = "rgba(255, 42, 143, 0.85)"; // Beautiful bright neon pink/magenta backing glow!
+      ctx.shadowBlur = 12 + Math.sin(time * 3) * 4;
+      
+      ctx.beginPath();
+      // Start of the top wave
+      ctx.moveTo(px + 44, py + 16);
+      // Top loop curve
+      ctx.bezierCurveTo(px + 32, py + 10, px + 20, py + 16, px + 22, py + 26);
+      // Middle diagnostic diagonal sweep
+      ctx.bezierCurveTo(px + 23, py + 32, px + 41, py + 32, px + 42, py + 38);
+      // Bottom loop curve
+      ctx.bezierCurveTo(px + 44, py + 48, px + 32, py + 54, px + 20, py + 48);
+      ctx.stroke();
+      
+      // Add an inner thin line to make it look hyper-modern and sleek (cyberpunk style)
+      ctx.strokeStyle = "#ffbde2"; // pastel light pink
+      ctx.lineWidth = 1.2;
+      ctx.shadowBlur = 0; // reset backing glow for thin lines
+      ctx.beginPath();
+      ctx.moveTo(px + 42, py + 18);
+      ctx.bezierCurveTo(px + 32, py + 13, px + 23, py + 18, px + 25, py + 26);
+      ctx.bezierCurveTo(px + 26, py + 31, px + 38, py + 31, px + 39, py + 38);
+      ctx.bezierCurveTo(px + 41, py + 45, px + 32, py + 51, px + 22, py + 46);
+      ctx.stroke();
+      
+      ctx.beginPath(); // clear path
+      ctx.restore(); // PERFECTLY RESTORES THE MAIN OUTER ctx.save()!
       return sparkColor;
     default:
       ctx.moveTo(px + 32, py + 18);
@@ -601,7 +1076,7 @@ function initLogoDesk() {
   if (!logoDeskGrid) return;
   logoDeskGrid.innerHTML = "";
   
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 11; i++) {
     const room = ROOMS[i];
     const item = document.createElement("div");
     item.className = "logo-desk-item";
@@ -619,7 +1094,7 @@ function initLogoDesk() {
     
     const index = document.createElement("span");
     index.className = "logo-desk-index";
-    index.textContent = `STAGE 0${i + 1}`;
+    index.textContent = i < 9 ? `STAGE 0${i + 1}` : `STAGE ${i + 1}`;
     
     const name = document.createElement("span");
     name.className = "logo-desk-name";
@@ -647,7 +1122,7 @@ function initLogoDesk() {
 }
 
 function updateLogoDeskActive() {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 11; i++) {
     const item = document.getElementById(`logo-desk-item-${i}`);
     if (item) {
       if (i === currentStage) {
@@ -660,7 +1135,7 @@ function updateLogoDeskActive() {
 }
 
 function drawLogoDesk() {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 11; i++) {
     const canvasEl = document.getElementById(`desk-canvas-${i}`);
     if (!canvasEl) continue;
     const ctxEl = canvasEl.getContext("2d");
@@ -1019,6 +1494,14 @@ let lastShootTime = 0;
 let chestOpened = false;
 let chestGemY = 0;
 let golemEmpowered = false;
+let playerDead = false;
+let playerDeathTimer = 0;
+let gameStarted = false;
+let audioEngine = null;
+let dragonHitFlash = 0;
+let dragonDead = false;
+let dragonDeadTime = 0;
+let dragonHP = 3;
 
 const player = {
   x: 100, y: 100, w: 46, h: 78, vx: 0, vy: 0, speed: 6, jumpPower: -16, gravity: 0.6,
@@ -1037,7 +1520,7 @@ let camera = { x: 0, y: 0 };
 
 const CHAR_MAP = {
   '.': 0, '#': 1, 'P': 2, 'T': 3, 'C': 4, 'B': 8, 'M': 7, 'X': 9,
-  'E': 10, 'G': 11, 'Y': 12, '^': 13, 'S': 14, 'A': 15 // Logic markers
+  'E': 10, 'G': 11, 'Y': 12, '^': 13, 'S': 14, 'A': 15, 'F': 16 // Logic markers
 };
 
 const STAGE_TEMPLATES = [
@@ -1047,12 +1530,12 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B...T................B............T..........#",
+    "#....T.....B......T................B............T..........#",
     "#..........................................................#",
     "#.......................................................P..#",
     "#..........E...................................E........P..#",
     "##################..#########.############..################",
-    "##################^^#########.############^^################",
+    "##################^^#########F############^^################",
     "############################################################"
   ],
   [ // Stage 1 - Avvio (Ceiling-hanging slow swinging axes and walking cultists)
@@ -1061,12 +1544,12 @@ const STAGE_TEMPLATES = [
     "#..................A............................A..........#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..................T.........B....T.......P..#",
+    "#....T....B.....................T..............T....B...P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#........G...........................G.....................#",
-    "############################################################",
-    "############################################################",
+    "#####################...#####################...############",
+    "#####################^^^#####################FFF############",
     "############################################################"
   ],
   [ // Stage 2 - Via (Flat floor rolling saws, floating bats)
@@ -1074,13 +1557,13 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..................T.........B....T..........#",
+    "#...B.T......................B...T..............T..........#",
     "#..........................................................#",
     "#.......................................................P..#",
     "#......Y..................Y.............................P..#",
     "#.................S....................S................####",
     "#########...########....########....########....############",
-    "#########^^^########^^^^########^^^^########^^^^############",
+    "#########^^^########FFFF########^^^^########^^^^############",
     "############################################################"
   ],
   [ // Stage 3 - Shift (Step platforms, overhead axes, skeletal guardians)
@@ -1089,12 +1572,12 @@ const STAGE_TEMPLATES = [
     "#..........A..............................A................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T...B...............T.........B............T.......P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#....E....................E................................#",
-    "#################...#####################...################",
-    "#################^^^#####################^^^################",
+    "#################...####################...#################",
+    "#################FFF####################^^^#################",
     "############################################################"
   ],
   [ // Stage 4 - Blend (Flat floor saws, ledge cultists, safe spike pits)
@@ -1102,13 +1585,13 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B.........T..........B.......T...............#",
+    "#...B.T.................T....B.....T.......................#",
     "#.......................................................P..#",
     "#..............G.............................G..........P..#",
     "#.......................................................####",
     "#..................S................S.................#....#",
     "#########...############....#############...###########....#",
-    "#########^^^############^^^^#############^^^###########....#",
+    "#########^^^############FFFF#############^^^###########....#",
     "############################################################"
   ],
   [ // Stage 5 - Promis (Hanging bridges, ceiling bats, skeleton defenders)
@@ -1116,13 +1599,13 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T........B..........T......................T....B..P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#.....Y..................Y..................Y...............#",
     "#................E...................E.....................#",
     "#########...############....#############...################",
-    "#########^^^############^^^^#############^^^################",
+    "#########^^^############FFFF#############^^^################",
     "############################################################"
   ],
   [ // Stage 6 - Vend (Split floor, swinging ceiling axes, skeleton guards)
@@ -1131,12 +1614,12 @@ const STAGE_TEMPLATES = [
     "#..................A............................A..........#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T.....B.............T.........B............T.......P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#........E...................E.............................#",
-    "#################...#####################...################",
-    "#################^^^#####################^^^################",
+    "#################...####################...#################",
+    "#################FFF####################^^^#################",
     "############################################################"
   ],
   [ // Stage 7 - DashX (Floor saws, safe cultist arenas)
@@ -1144,13 +1627,13 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T...........B.......T.........B............T.......P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#.......G.................G................................#",
     "#.............S..................S.........................#",
-    "####################...##################...################",
-    "####################^^^##################^^^################",
+    "#####################...#################...################",
+    "#####################FFF#################^^^################",
     "############################################################"
   ],
   [ // Stage 8 - Specie (Stepping platforms over easy spikes, floor saws, bats)
@@ -1158,13 +1641,13 @@ const STAGE_TEMPLATES = [
     "#..........................................................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T........B..........T......................T....B..P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#.....Y..................Y..................Y..............#",
     "#..............S................S..........................#",
     "#########...############...##############...################",
-    "#########^^^############^^^##############^^^################",
+    "#########^^^############FFF##############^^^################",
     "############################################################"
   ],
   [ // Stage 9 - Port Markets (Grand final vault, swinging axes, skeletal defenders)
@@ -1173,19 +1656,33 @@ const STAGE_TEMPLATES = [
     "#..........A..............................A................#",
     "#..........................................................#",
     "#..........................................................#",
-    "#....T........B..........T........B.............T.......P..#",
+    "#....T...B...............T.........B............T.......P..#",
     "#.......................................................P..#",
     "#.......................................................####",
     "#....E....................E................................#",
-    "#################...#####################...################",
-    "#################^^^#####################^^^################",
+    "#################...####################...#################",
+    "#################FFF####################^^^#################",
+    "############################################################"
+  ],
+  [ // Stage 10 - Sedona (Samarkand Grand Vault, twin saws, vertical pillars, swinging axes)
+    "############################################################",
+    "#..........#..............................#................#",
+    "#..........A................................A..............#",
+    "#..........................................................#",
+    "#..........................................................#",
+    "#....T...B...............T.........B............T.......P..#",
+    "#.......................................................P..#",
+    "#.......................................................####",
+    "#....E......................S..........E...................#",
+    "#################...####################...#################",
+    "#################^^^####################FFF#################",
     "############################################################"
   ]
 ];
 
 function generateInteriorMap(stageIndex) {
   let temp = [];
-  if (stageIndex === 10) {
+  if (stageIndex === 11) {
     temp = [
       "....................",
       "....................",
@@ -1248,6 +1745,8 @@ function parseTemplate(template) {
         traps.push({ type: 'spike', x: x * TILE_SIZE, y: y * TILE_SIZE });
       } else if (char === 'A') {
         traps.push({ type: 'axe', x: x * TILE_SIZE, y: y * TILE_SIZE, angle: 0, timeOffset: Math.random() * 10 });
+      } else if (char === 'F') {
+        traps.push({ type: 'fire', x: x * TILE_SIZE, y: y * TILE_SIZE });
       }
       
       // Enemies
@@ -1263,6 +1762,7 @@ function parseTemplate(template) {
 
   // Architectural Pillars in background
   for (let x = 2; x < mapWidth; x += 6) {
+    if (newMap[9] && newMap[9][x] !== 1) continue; // Skip background pillars in gaps/traps!
     for (let y = 0; y < mapHeight; y++) {
       if (newMap[y][x] === 0) newMap[y][x] = 5;
     }
@@ -1271,18 +1771,28 @@ function parseTemplate(template) {
   return newMap;
 }
 
+function killPlayer() {
+  if (playerDead) return;
+  playerDead = true;
+  playerDeathTimer = 2.0; // 2 seconds delay
+  player.vy = -6; // Cinematic dead bounce!
+  player.vx = 0;
+  player.state = "dead";
+  if (audioEngine) audioEngine.playDeath();
+}
+
 function initStage() {
   if (!logoDeskInitialized) {
     initLogoDesk();
     logoDeskInitialized = true;
   }
-  if (currentStage === 10) {
+  if (currentStage === 11) {
     // Final Room (Seismic) has no outdoor stage, directly load interior palace
     inInterior = true;
-    map = generateInteriorMap(10);
+    map = generateInteriorMap(11);
   } else if (inInterior) {
     map = generateInteriorMap(currentStage);
-  } else if (currentStage < 10) {
+  } else if (currentStage < 11) {
     map = parseTemplate(STAGE_TEMPLATES[currentStage]);
   } else {
     // Post-game or empty
@@ -1302,14 +1812,26 @@ function initStage() {
     ]);
   }
   player.x = 100; player.y = 100; player.vx = 0; player.vy = 0; player.grounded = false;
+  player.state = "idle";
+  playerDead = false;
+  dragonDead = false;
+  dragonDeadTime = 0;
+  dragonHP = 3;
+  playerDeathTimer = 0;
   updateUI();
+  if (gameStarted) {
+    setTimeout(() => {
+      window.focus();
+      canvas.focus();
+    }, 50);
+  }
 }
 
 function updateUI() {
-  progressValue.textContent = `${currentStage === 10 ? 10 : currentStage + 1} / 10`;
+  progressValue.textContent = `${currentStage === 11 ? 11 : currentStage + 1} / 11`;
   updateLogoDeskActive();
-  if (currentStage === 10) {
-    const r = ROOMS[10];
+  if (currentStage === 11) {
+    const r = ROOMS[11];
     spaceName.textContent = "Final: " + r.name;
     roomTitle.textContent = r.name + " Palace";
     roomSubtitle.textContent = r.subtitle;
@@ -1320,7 +1842,7 @@ function updateUI() {
     roomTitle.textContent = `${r.name} Monument`;
     roomSubtitle.textContent = "Sacred ground. Absorb the ancient wisdom.";
     inscriptionText.textContent = "Press E to read the monument. Then leave through the gate on the right.";
-  } else if (currentStage < 10) {
+  } else if (currentStage < 11) {
     spaceName.textContent = `Stage ${currentStage + 1}`;
     roomTitle.textContent = "The Journey";
     roomSubtitle.textContent = "Navigate the hurdles, reach the sanctuary gate.";
@@ -1337,7 +1859,16 @@ function openPapyrus() {
   papyrusOpen = true;
   
   // 1. Populate text content first so the container expands to its final physical height
-  const r = ROOMS[currentStage];
+  const r = ROOMS[currentStage] || { 
+    name: "Seismic", 
+    subtitle: "The Ultimate Shielded Core Network", 
+    archiveSections: [
+      { 
+        title: "The Sovereign Enclave", 
+        body: "You have unlocked the inner chambers of the Seismic network. Every transaction is shielded, every contract is sovereign, and the Golem is now fully empowered." 
+      }
+    ] 
+  };
   papyrusTitle.textContent = r.name;
   papyrusIntro.textContent = r.subtitle;
   papyrusBody.innerHTML = "";
@@ -1349,7 +1880,7 @@ function openPapyrus() {
   });
   
   // 2. Set theme class dynamically based on stage index
-  const themes = ["norse", "egyptian", "greek", "steampunk", "mayan", "gothic", "persian", "cyber", "indian", "cosmic"];
+  const themes = ["norse", "egyptian", "greek", "steampunk", "mayan", "gothic", "persian", "cyber", "indian", "cosmic", "sedona"];
   const sheet = document.querySelector('.papyrus-sheet');
   if (sheet) {
     // Remove any existing theme classes
@@ -1721,6 +2252,39 @@ function openPapyrus() {
           <circle cx="0" cy="0" r="3" fill="#fff"/>
         </g>
       `;
+    } else if (currentTheme === "sedona") {
+      svg.innerHTML = `
+        <defs>
+          <filter id="sedona-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+        <!-- Samarkand Timurid Interlocking Geometric Mosaic Frame -->
+        <rect x="15" y="15" width="570" height="770" rx="10" fill="none" stroke="#00ebd4" stroke-width="2.5" opacity="0.8" filter="url(#sedona-glow)"/>
+        <rect x="23" y="23" width="554" height="754" rx="6" fill="none" stroke="#ef5f00" stroke-width="1.5" opacity="0.7"/>
+        
+        <!-- Elegant Timurid Star Arch Shape (Dome motif) along the top -->
+        <path d="M 50 100 L 50 24 M 50 24 Q 300 -10, 550 24 L 550 100" fill="none" stroke="#00ebd4" stroke-width="1.2" opacity="0.3"/>
+        
+        <!-- Symmetrical Persian Girih (geometric star patterns) in corners -->
+        <g stroke="#00ebd4" stroke-width="1.2" fill="none" opacity="0.6">
+          <!-- Top Left Girih Star -->
+          <path d="M 23 60 L 60 23 M 23 75 L 75 23 M 40 40 L 70 70 M 30 50 L 50 30"/>
+          <!-- Top Right Girih Star -->
+          <path d="M 577 60 L 540 23 M 577 75 L 525 23 M 560 40 L 530 70 M 570 50 L 550 30"/>
+        </g>
+        
+        <!-- Beautiful Timurid Rosette Medallion at top center (dome interior view) -->
+        <g transform="translate(300, 65) scale(0.95)" stroke="#00ebd4" stroke-width="1.8" fill="none" filter="url(#sedona-glow)">
+          <circle cx="0" cy="0" r="24" stroke-dasharray="4,2" opacity="0.5"/>
+          <circle cx="0" cy="0" r="16" stroke="#ef5f00"/>
+          <!-- Intricate star rays -->
+          <path d="M 0 -24 L 0 24 M -24 0 L 24 0 M -17 -17 L 17 17 M -17 17 L 17 -17" opacity="0.4"/>
+          <path d="M 0 -16 C -6 -6, -6 6, 0 16 C 6 6, 6 -6, 0 -16 Z" fill="#ef5f00" fill-opacity="0.3"/>
+          <circle cx="0" cy="0" r="4" fill="#00ebd4"/>
+        </g>
+      `;
     }
 
     sheet.prepend(svg);
@@ -1743,7 +2307,7 @@ function tryInteract() {
   const tx = Math.floor((player.x + player.w/2) / TILE_SIZE);
   const ty = Math.floor((player.y + player.h/2) / TILE_SIZE);
 
-  if (currentStage === 10) {
+  if (inInterior && currentStage === 11) {
     let nearChest = false;
     for(let y=ty-2; y<=ty+2; y++) {
       for(let x=tx-2; x<=tx+2; x++) {
@@ -1759,7 +2323,7 @@ function tryInteract() {
         golemEmpowered = true; // touch crystal to empower
       }
     }
-  } else if (!inInterior && currentStage < 10) {
+  } else if (!inInterior && currentStage < 11) {
     let nearPortal = false;
     for(let y=ty-2; y<=ty+2; y++) {
       for(let x=tx-2; x<=tx+2; x++) {
@@ -1801,6 +2365,31 @@ function isSolid(x, y) {
 }
 
 function updatePhysics() {
+  try {
+    if (playerDead) {
+      playerDeathTimer -= 0.016;
+      player.vx = 0;
+    player.vy += player.gravity;
+    player.y += player.vy;
+    
+    // Y-collision with solid floor so the dead golem rests exactly on the floor!
+    let ty = Math.floor((player.y + player.h) / TILE_SIZE);
+    if (isSolid(player.x, player.y + player.h) || isSolid(player.x + player.w - 1, player.y + player.h)) {
+      player.y = ty * TILE_SIZE - player.h;
+      player.vy = 0;
+    }
+    
+    if (playerDeathTimer <= 0) {
+      playerDead = false;
+      initStage(currentStage);
+    }
+    
+    camera.x = player.x - canvas.width / 2;
+    if(camera.x < 0) camera.x = 0;
+    if(camera.x > mapWidth * TILE_SIZE - canvas.width) camera.x = mapWidth * TILE_SIZE - canvas.width;
+    return;
+  }
+
   if (papyrusOpen) return;
 
   // Horizontal Movement
@@ -1826,6 +2415,7 @@ function updatePhysics() {
        w: 12, h: 12
      });
      lastShootTime = time;
+     if (audioEngine) audioEngine.playShoot();
   }
 
   player.vy += player.gravity;
@@ -1834,6 +2424,7 @@ function updatePhysics() {
   if ((keys.has("w") || keys.has("arrowup") || keys.has(" ")) && player.grounded) {
     player.vy = player.jumpPower;
     player.grounded = false;
+    if (audioEngine) audioEngine.playJump();
   }
 
   if (!player.grounded) player.state = "jump";
@@ -1851,6 +2442,7 @@ function updatePhysics() {
   }
 
   // Apply Y collision
+  const wasGrounded = player.grounded;
   player.grounded = false;
   player.y += player.vy;
   if (player.vy > 0) {
@@ -1858,6 +2450,7 @@ function updatePhysics() {
       player.y = Math.floor((player.y + player.h) / TILE_SIZE) * TILE_SIZE - player.h;
       player.vy = 0;
       player.grounded = true;
+      if (!wasGrounded && audioEngine) audioEngine.playLand();
     }
   } else if (player.vy < 0) {
     if (isSolid(player.x, player.y) || isSolid(player.x + player.w - 1, player.y)) {
@@ -1865,13 +2458,23 @@ function updatePhysics() {
       const txLeft = Math.floor(player.x / TILE_SIZE);
       const txRight = Math.floor((player.x + player.w - 1) / TILE_SIZE);
       const ty = Math.floor((player.y - 1) / TILE_SIZE);
-      if (map[ty][txLeft] === 8) { if(!activeBlocks.find(b=>b.tx===txLeft&&b.ty===ty)) activeBlocks.push({ tx: txLeft, ty, time: 0, spawned: false }); }
-      if (map[ty][txRight] === 8) { if(!activeBlocks.find(b=>b.tx===txRight&&b.ty===ty)) activeBlocks.push({ tx: txRight, ty, time: 0, spawned: false }); }
+      if (map[ty] && map[ty][txLeft] === 8) { 
+        if(!activeBlocks.find(b=>b.tx===txLeft&&b.ty===ty)) {
+          activeBlocks.push({ tx: txLeft, ty, time: 0, spawned: false });
+          if (audioEngine) audioEngine.playCollect();
+        }
+      }
+      if (map[ty] && map[ty][txRight] === 8) { 
+        if(!activeBlocks.find(b=>b.tx===txRight&&b.ty===ty)) {
+          activeBlocks.push({ tx: txRight, ty, time: 0, spawned: false });
+          if (audioEngine) audioEngine.playCollect();
+        }
+      }
       player.vy = 0;
     }
   }
 
-  if (player.y > mapHeight * TILE_SIZE) { player.y = 100; player.x = 100; player.vy = 0; }
+  if (player.y > mapHeight * TILE_SIZE) { killPlayer(); }
 
   // Update Projectiles
   for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -1882,13 +2485,51 @@ function updatePhysics() {
       continue;
     }
     let hit = false;
-    for (let e of enemies) {
-      if (!e.dead && p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
-        e.dead = true; e.deadTime = 0; e.vx = 0; e.vy = -5;
-        hit = true; break;
+    // Hit the dragon in the Sanctum!
+    if (inInterior && currentStage === 11 && !dragonDead) {
+      const dragX = 900 + Math.cos(time * 0.8) * 260;
+      const dragY = 320 + Math.sin(time * 2.5) * 15;
+      if (p.x < dragX + 70 && p.x + p.w > dragX - 70 && p.y < dragY + 50 && p.y + p.h > dragY - 50) {
+        dragonHitFlash = 12; // flash/flinch for 12 frames!
+        dragonHP--;
+        if (dragonHP <= 0) {
+          dragonDead = true;
+          dragonDeadTime = 0;
+        }
+        hit = true;
+      }
+    }
+    if (!hit) {
+      for (let e of enemies) {
+        if (!e.dead && p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
+          e.dead = true; e.deadTime = 0; e.vx = 0; e.vy = -5;
+          hit = true; break;
+        }
       }
     }
     if (hit) projectiles.splice(i, 1);
+  }
+
+  // Dragon-Player and Fire Breath collision
+  if (inInterior && currentStage === 11 && !dragonDead) {
+    const dragX = 900 + Math.cos(time * 0.8) * 260;
+    const dragY = 320 + Math.sin(time * 2.5) * 15;
+    const dx = Math.abs(player.x + player.w/2 - dragX);
+    const dy = Math.abs(player.y + player.h/2 - dragY);
+    if (dx < 70 && dy < 50) {
+      killPlayer();
+    }
+    const isBreathing = (time % 4) < 2.2;
+    if (isBreathing) {
+      const dir = Math.sin(time * 0.8) > 0 ? 1 : -1;
+      const fireX = dragX + (dir === 1 ? -95 : 20);
+      const fireW = 75;
+      const fireY = dragY - 10;
+      const fireH = 40;
+      if (player.x < fireX + fireW && player.x + player.w > fireX && player.y < fireY + fireH && player.y + player.h > fireY) {
+        killPlayer();
+      }
+    }
   }
 
   // Update Traps
@@ -1898,12 +2539,18 @@ function updatePhysics() {
       if (t.x < t.minX || t.x > t.maxX) t.vx *= -1;
       const dx = (player.x + player.w/2) - t.x; const dy = (player.y + player.h/2) - t.y;
       // Softened saw collision (radius + 8px instead of +15px)
-      if (Math.sqrt(dx*dx + dy*dy) < t.radius + 8) { player.y = 100; player.x = 100; player.vy = 0; }
+      if (Math.sqrt(dx*dx + dy*dy) < t.radius + 8) { killPlayer(); }
     } else if (t.type === 'spike') {
       // Spikes are bottom 24px of the tile. Softened side margins (18px-46px instead of 14px-50px)
       if (player.x < t.x + 46 && player.x + player.w > t.x + 18 &&
           player.y < t.y + 64 && player.y + player.h > t.y + 40) {
-          player.y = 100; player.x = 100; player.vy = 0;
+          killPlayer();
+      }
+    } else if (t.type === 'fire') {
+      // Fire pit has the exact same relaxed hitbox as spikes for consistency and fairness
+      if (player.x < t.x + 46 && player.x + player.w > t.x + 18 &&
+          player.y < t.y + 64 && player.y + player.h > t.y + 40) {
+          killPlayer();
       }
     } else if (t.type === 'axe') {
       // Slowed down axe swinging (1.5 frequency, smaller maximum angle 2.5 divisor)
@@ -1913,7 +2560,7 @@ function updatePhysics() {
       const dx = (player.x + player.w/2) - bx;
       const dy = (player.y + player.h/2) - by;
       // Softened axe collision (42px radius instead of 55px)
-      if (Math.sqrt(dx*dx + dy*dy) < 42) { player.y = 100; player.x = 100; player.vy = 0; }
+      if (Math.sqrt(dx*dx + dy*dy) < 42) { killPlayer(); }
     }
   }
 
@@ -1948,7 +2595,7 @@ function updatePhysics() {
     }
 
     if (player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.y + player.h > e.y) {
-        player.y = 100; player.x = 100; player.vy = 0;
+        killPlayer();
     }
   }
 
@@ -1968,12 +2615,15 @@ function updatePhysics() {
   for (let i = items.length - 1; i >= 0; i--) {
     let item = items[i];
     item.life += 0.016;
-    if (item.life > 3.0) { logosCollected++; items.splice(i, 1); }
+    if (item.life > 3.0) { items.splice(i, 1); }
   }
 
-  camera.x = player.x - canvas.width / 2;
-  if(camera.x < 0) camera.x = 0;
-  if(camera.x > mapWidth * TILE_SIZE - canvas.width) camera.x = mapWidth * TILE_SIZE - canvas.width;
+    camera.x = player.x - canvas.width / 2;
+    if(camera.x < 0) camera.x = 0;
+    if(camera.x > mapWidth * TILE_SIZE - canvas.width) camera.x = mapWidth * TILE_SIZE - canvas.width;
+  } catch (err) {
+    console.error("Physics loop crash caught safely:", err);
+  }
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -1997,32 +2647,116 @@ function drawSkeleton(ctx, e, time) {
      ctx.translate(e.x + e.w/2, e.y + e.h); // Exactly on top of platform!
      if (e.vx < 0) ctx.scale(-1, 1);
      ctx.rotate(Math.PI / 2); // Rotate to lay flat
-     ctx.translate(30, -8); // Align flat on floor line
+     ctx.translate(-12, -30); // Align flat on floor line
   } else {
      ctx.translate(e.x + e.w/2, e.y + e.h);
      if (e.vx < 0) ctx.scale(-1, 1);
   }
-  const wAmt = e.dead ? 0 : (Math.abs(e.vx)>0?1:0); const phase = e.dead ? 0 : time*8; const bob = Math.sin(phase*2)*2*wAmt;
+  const wAmt = e.dead ? 0 : (Math.abs(e.vx)>0?1:0); const phase = e.dead ? 0 : time*8; const bob = Math.sin(phase*2)*2.5*wAmt;
   const legF = Math.sin(phase)*12*wAmt; const legB = Math.sin(phase+Math.PI)*12*wAmt;
   ctx.translate(0, -60 + bob);
   ctx.lineJoin = "round"; ctx.lineCap = "round";
   
-  ctx.strokeStyle = "#95a5a6"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(-10 + legB, 25); ctx.stroke(); // B Arm
-  ctx.beginPath(); ctx.moveTo(-5, 35); ctx.lineTo(-5 + legF, 55); ctx.stroke(); // B Leg
-  ctx.strokeStyle = "#e0e0e0"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, 35); ctx.stroke(); // Spine
-  ctx.lineWidth = 3; for(let i=0; i<3; i++) { ctx.beginPath(); ctx.moveTo(-8, 15+i*6); ctx.lineTo(8, 15+i*6); ctx.stroke(); } // Ribs
-  ctx.beginPath(); ctx.moveTo(-8, 35); ctx.lineTo(8, 35); ctx.stroke(); // Pelvis
-  ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(5, 35); ctx.lineTo(5 + legB, 55); ctx.stroke(); // F Leg
+  // 1. Draw rugged weathered round shield on Back Shoulder
+  ctx.save();
+  ctx.translate(-14, 20);
+  ctx.fillStyle = "#3c352a"; // Dark iron core
+  ctx.strokeStyle = "#856d49"; // Weathered bronze rim
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 15, 0, Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  // Shield emblem (Seismic theme)
+  ctx.fillStyle = "#e580a6"; // Rose gold crystal center
+  ctx.beginPath();
+  ctx.arc(0, 0, 4, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Bones rendering
+  ctx.strokeStyle = "#d6dbdf"; ctx.lineWidth = 4.5; 
+  ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(-10 + legB, 25); ctx.stroke(); // B Arm
+  ctx.beginPath(); ctx.moveTo(-6, 35); ctx.lineTo(-6 + legF, 55); ctx.stroke(); // B Leg
+  ctx.strokeStyle = "#eaeded"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, 35); ctx.stroke(); // Spine
   
-  ctx.save(); ctx.translate(0, 10); ctx.rotate(e.dead ? 0.3 : Math.sin(time*3)*0.2); // Arm
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(12, 12); ctx.stroke();
-  ctx.strokeStyle = "#bdc3c7"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(12, 12); ctx.lineTo(30, -5); ctx.stroke(); // Sword
-  ctx.strokeStyle = "#c0392b"; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(10, 8); ctx.lineTo(16, 16); ctx.stroke(); // Hilt
+  // High-fidelity Ribs (curved instead of flat)
+  ctx.lineWidth = 3.5;
+  for(let i=0; i<3; i++) {
+    ctx.beginPath();
+    ctx.arc(0, 14 + i*6, 9 - i*1, 0, Math.PI, true); // Rib cage arch
+    ctx.stroke();
+  }
+  
+  // Thick Pelvis bone
+  ctx.fillStyle = "#eaeded";
+  ctx.beginPath();
+  ctx.ellipse(0, 35, 9, 4, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  ctx.strokeStyle = "#eaeded"; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.moveTo(6, 35); ctx.lineTo(6 + legB, 55); ctx.stroke(); // F Leg
+  
+  // 3. Serrated Obsidian Sword in Front Hand
+  ctx.save();
+  ctx.translate(0, 12);
+  ctx.rotate(e.dead ? 0.35 : Math.sin(time*4.5)*0.25); // Slashing animation
+  ctx.strokeStyle = "#2d3436"; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(14, 14); ctx.stroke(); // F Arm bone
+  
+  ctx.translate(14, 14);
+  // Drawing serrated ancient blade
+  ctx.fillStyle = "#2c3e50"; // Dark obsidian iron
+  ctx.strokeStyle = "#e580a6"; // Glowing rose gold runic edges!
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(26, -18);
+  ctx.lineTo(32, -26); // Sword Tip
+  ctx.lineTo(24, -14);
+  ctx.lineTo(21, -16); // Jagged tooth 1
+  ctx.lineTo(17, -10);
+  ctx.lineTo(14, -12); // Jagged tooth 2
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // Gold crossguard and leather pommel
+  ctx.strokeStyle = "#cca53d"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-4, 2); ctx.lineTo(4, -6); ctx.stroke();
+  ctx.strokeStyle = "#5c3a21"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-5, 5); ctx.stroke();
   ctx.restore();
   
-  ctx.fillStyle = "#e0e0e0"; ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill(); // Skull
-  ctx.fillRect(-6, 8, 12, 6); // Jaw
-  ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(4, 0, 2, 0, Math.PI*2); ctx.arc(-4, 0, 2, 0, Math.PI*2); ctx.fill(); // Eyes
+  // 4. Skull & Horned Helmet
+  ctx.fillStyle = "#eaeded"; 
+  ctx.beginPath(); ctx.arc(0, -2, 11, 0, Math.PI*2); ctx.fill(); // Skull
+  ctx.fillRect(-5, 5, 10, 5); // Jaw
+  // Jaw teeth detailing
+  ctx.fillStyle = "#2c3e50";
+  ctx.fillRect(-3, 5, 1.5, 2); ctx.fillRect(1, 5, 1.5, 2);
+  
+  // Horned Decayed Helmet on top of skull
+  ctx.fillStyle = "#5d6d7e"; // Steely grey iron dome
+  ctx.beginPath();
+  ctx.arc(0, -5, 12, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  // Gold pointed helmet spike
+  ctx.fillStyle = "#cca53d";
+  ctx.beginPath();
+  ctx.moveTo(-2, -17); ctx.lineTo(0, -24); ctx.lineTo(2, -17);
+  ctx.closePath();
+  ctx.fill();
+  // Savage curving golden horns on helmet sides
+  ctx.strokeStyle = "#dfb96c"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(-11, -6, 7, Math.PI*0.5, Math.PI*1.5); ctx.stroke(); // Left horn curve
+  ctx.beginPath(); ctx.arc(11, -6, 7, Math.PI*1.5, Math.PI*0.5); ctx.stroke(); // Right horn curve
+  
+  // Terrifying Red Spectral Glowing Eyes
+  ctx.fillStyle = "#ff2d55"; 
+  ctx.beginPath(); ctx.arc(3.5, -2, 2.5, 0, Math.PI*2); ctx.arc(-3.5, -2, 2.5, 0, Math.PI*2); ctx.fill();
+  // Red eye flare tail drifting upwards
+  ctx.fillStyle = "rgba(255, 45, 85, 0.4)";
+  ctx.beginPath(); ctx.moveTo(3.5, -2); ctx.lineTo(6, -8 - Math.sin(time*10)*2); ctx.lineTo(2, -2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-3.5, -2); ctx.lineTo(-6, -8 - Math.sin(time*10 + 2)*2); ctx.lineTo(-2, -2); ctx.fill();
+  
   ctx.restore();
 }
 
@@ -2033,33 +2767,126 @@ function drawCultist(ctx, e, time) {
      ctx.translate(e.x + e.w/2, e.y + e.h); // Exactly on top of platform!
      if (e.vx < 0) ctx.scale(-1, 1);
      ctx.rotate(-Math.PI / 2); // Tilt backward
-     ctx.translate(-30, -8); // Align flat on floor line
+     ctx.translate(12, -30); // Align flat on floor line
   } else {
      ctx.translate(e.x + e.w/2, e.y + e.h);
      if (e.vx < 0) ctx.scale(-1, 1);
   }
-  const phase = e.dead ? 0 : time*10; const bob = e.dead ? 0 : Math.sin(phase*2)*3;
+  const phase = e.dead ? 0 : time*10; const bob = e.dead ? 0 : Math.sin(phase*2)*3.5;
   ctx.translate(0, -60 + bob);
   
-  // Robe body
-  ctx.fillStyle = "#2c3e50";
-  ctx.beginPath(); ctx.moveTo(-15, 60); ctx.lineTo(15, 60); ctx.lineTo(10, 15); ctx.lineTo(-10, 15); ctx.fill();
+  // 1. Wizard deep layered high-collared void robe
+  const grad = ctx.createLinearGradient(-15, 10, 15, 60);
+  grad.addColorStop(0, "#1c0b2b"); // Deep mystical obsidian violet
+  grad.addColorStop(1, "#0d0416"); // Deep void space black
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.moveTo(-18, 60); ctx.lineTo(18, 60); ctx.lineTo(12, 10); ctx.lineTo(-12, 10); ctx.fill();
   
-  // Hood
-  ctx.fillStyle = "#1a252f";
-  ctx.beginPath(); ctx.arc(0, 5, 14, 0, Math.PI*2); ctx.fill();
+  // Gold runic hems along robe edges
+  ctx.strokeStyle = "#cca53d"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-18, 59); ctx.lineTo(18, 59); ctx.stroke(); // Bottom gold rim
+  ctx.beginPath(); ctx.moveTo(-12, 12); ctx.lineTo(-17, 58); ctx.stroke(); // Left vertical rim
+  ctx.beginPath(); ctx.moveTo(12, 12); ctx.lineTo(17, 58); ctx.stroke(); // Right vertical rim
   
-  // Glowing Eyes
-  ctx.fillStyle = "#9b59b6";
-  ctx.beginPath(); ctx.arc(4, 5, 2.5, 0, Math.PI*2); ctx.arc(-4, 5, 2.5, 0, Math.PI*2); ctx.fill();
-  ctx.shadowColor = "#8e44ad"; ctx.shadowBlur = 10;
-  ctx.beginPath(); ctx.arc(4, 5, 1.5, 0, Math.PI*2); ctx.arc(-4, 5, 1.5, 0, Math.PI*2); ctx.fill();
-  ctx.shadowBlur = 0;
+  // Pointed shoulder pauldrons / mantle cape
+  ctx.fillStyle = "#2c1c3d";
+  ctx.beginPath();
+  ctx.moveTo(-16, 12); ctx.lineTo(-24, 22); ctx.lineTo(0, 18); ctx.lineTo(24, 22); ctx.lineTo(16, 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#cca53d"; ctx.lineWidth = 1.0; ctx.stroke();
+
+  // 2. High Pointed Wizard Hood (Scary silhouetted wizard)
+  ctx.fillStyle = "#140c1e"; // Pointed exterior hood
+  ctx.beginPath();
+  ctx.moveTo(0, -22); // Tall pointed tip
+  ctx.bezierCurveTo(-15, -20, -16, 12, -15, 12);
+  ctx.lineTo(15, 12);
+  ctx.bezierCurveTo(16, 12, 15, -20, 0, -22);
+  ctx.fill();
+  ctx.strokeStyle = "#cca53d"; ctx.lineWidth = 1.0; ctx.stroke(); // Hood golden seam
   
-  // Magic Hand
-  ctx.save(); ctx.translate(15, 30); ctx.rotate(e.dead ? 0.4 : Math.sin(time*4)*0.5);
-  ctx.fillStyle = "#9b59b6"; ctx.beginPath(); ctx.arc(10, 0, 5, 0, Math.PI*2); ctx.fill();
+  // Dark void inner hood mask
+  ctx.fillStyle = "#000000"; 
+  ctx.beginPath(); ctx.arc(0, -2, 10, 0, Math.PI*2); ctx.fill();
+  
+  // Terrifying glowing purple runic eyes (scary neon void glow)
+  ctx.fillStyle = "#e84393";
+  ctx.beginPath(); ctx.arc(3.5, -2, 2.5, 0, Math.PI*2); ctx.arc(-3.5, -2, 2.5, 0, Math.PI*2); ctx.fill();
+  
+  ctx.shadowColor = "#d03df5"; ctx.shadowBlur = 10;
+  ctx.fillStyle = "#ffffff"; // Bright core
+  ctx.beginPath(); ctx.arc(3.5, -2, 1.2, 0, Math.PI*2); ctx.arc(-3.5, -2, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0; // Restore shadow
+  
+  // 3. Ancient Sorcerer's Staff (Elinde Asa)
+  ctx.save();
+  ctx.translate(14, 18);
+  ctx.rotate(e.dead ? 0.45 : Math.sin(time*4)*0.2); // Staff casting tilt
+  
+  // Crooked mahogany staff shaft
+  ctx.strokeStyle = "#4d2c18"; ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 42); // Base
+  ctx.lineTo(-2, 15);
+  ctx.lineTo(0, -18); // Gnarled crooked node
+  ctx.lineTo(5, -34); // Head of staff
+  ctx.stroke();
+  
+  // Golden crystal mounting setting at head
+  ctx.fillStyle = "#cca53d";
+  ctx.beginPath();
+  ctx.arc(5, -34, 4.5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = "#856d49"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, -32); ctx.lineTo(-5, -42); ctx.lineTo(5, -34); ctx.stroke(); // Left horn clasp
+  ctx.beginPath(); ctx.moveTo(10, -32); ctx.lineTo(15, -42); ctx.lineTo(5, -34); ctx.stroke(); // Right horn clasp
+  
+  // Terrifying floating pink magic core crystal above staff clasp
+  const crystalY = -48 + Math.sin(time*6)*2.5;
+  ctx.fillStyle = "#fca3ff";
+  ctx.strokeStyle = "#df62ff";
+  ctx.lineWidth = 1.5;
+  ctx.save();
+  ctx.translate(5, crystalY);
+  ctx.beginPath();
+  ctx.moveTo(0, -7); ctx.lineTo(4, 0); ctx.lineTo(0, 7); ctx.lineTo(-4, 0); // diamond crystal shape
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
+  
+  // Concentric neon purple magical shockwaves around floating crystal
+  ctx.strokeStyle = "rgba(223, 98, 255, " + (0.4 + Math.sin(time*5)*0.2) + ")";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(5, crystalY, 11 + Math.sin(time*8)*3, 0, Math.PI*2);
+  ctx.stroke();
+  
+  // Tiny magical sparkling star dots
+  ctx.fillStyle = "#ffffff";
+  const sparkX1 = 12 + Math.cos(time*5)*4; const sparkY1 = crystalY - 4 + Math.sin(time*7)*4;
+  const sparkX2 = -2 + Math.sin(time*6)*4; const sparkY2 = crystalY + 6 + Math.cos(time*4)*4;
+  ctx.fillRect(sparkX1, sparkY1, 2, 2);
+  ctx.fillRect(sparkX2, sparkY2, 2, 2);
+  
+  ctx.restore(); // staff restore
+  
+  // 4. Casting magical hand reaching out
+  ctx.save();
+  ctx.translate(-12, 26);
+  ctx.rotate(e.dead ? -0.2 : Math.sin(time*3.5)*0.3);
+  ctx.fillStyle = "#df62ff";
+  ctx.beginPath();
+  ctx.arc(-4, 0, 3.5, 0, Math.PI*2); // hand
+  ctx.fill();
+  // small glowing orb in casting hand
+  ctx.shadowColor = "#df62ff"; ctx.shadowBlur = 8;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.arc(-5, 0, 1.8, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  
   ctx.restore();
 }
 
@@ -2074,29 +2901,86 @@ function drawBat(ctx, e, time) {
      if (e.vx > 0) ctx.scale(-1, 1);
   }
   
-  const wingPhase = e.dead ? 0.3 : Math.sin(time * 30 + e.timeOffset);
+  const wingPhase = e.dead ? 0.3 : Math.sin(time * 24 + e.timeOffset);
   
-  // Body
-  ctx.fillStyle = "#111";
-  ctx.beginPath(); ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI*2); ctx.fill();
+  // 1. Faint violet embers trailing behind the bat
+  if (!e.dead) {
+    ctx.save();
+    ctx.fillStyle = "rgba(208, 61, 245, " + (0.3 + Math.sin(time*10)*0.2) + ")";
+    ctx.fillRect(8 + Math.sin(time*15)*3, 2 + Math.cos(time*10)*2, 3, 3);
+    ctx.fillRect(14 + Math.cos(time*12)*4, -4 + Math.sin(time*8)*3, 2, 2);
+    ctx.restore();
+  }
+
+  // 2. Wings (Left & Right - layered below body)
+  ctx.fillStyle = "#2c1a36"; // Wing web violet-dark grey
+  ctx.strokeStyle = "#0d0510"; // Wing bone struts
+  ctx.lineWidth = 1.5;
   
-  // Ears
-  ctx.beginPath(); ctx.moveTo(-6, -4); ctx.lineTo(-10, -12); ctx.lineTo(-2, -6); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-1, -6); ctx.lineTo(2, -12); ctx.lineTo(3, -5); ctx.fill();
-  
-  // Red Eyes
-  ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(-6, -2, 1.5, 0, Math.PI*2); ctx.fill();
-  
-  // Wings
-  ctx.fillStyle = "#222";
-  ctx.save(); ctx.translate(0, -3); ctx.rotate(wingPhase * 0.8);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(15, -15); ctx.lineTo(20, -5); ctx.lineTo(10, 5); ctx.fill();
+  // Wing 1 (Back Wing)
+  ctx.save();
+  ctx.translate(-2, -2);
+  ctx.rotate(wingPhase * 0.85);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-24, -20); // main arm
+  ctx.lineTo(-30, -5);  // tip 1
+  ctx.lineTo(-20, 2);   // fold 1
+  ctx.lineTo(-18, 12);  // tip 2
+  ctx.lineTo(-5, 4);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // Gold claw spike at the wing joint
+  ctx.fillStyle = "#cca53d";
+  ctx.beginPath(); ctx.arc(-12, -10, 2, 0, Math.PI*2); ctx.fill();
   ctx.restore();
   
-  ctx.save(); ctx.translate(5, -3); ctx.rotate(-wingPhase * 0.8);
-  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(15, -15); ctx.lineTo(25, -2); ctx.lineTo(10, 5); ctx.fill();
+  // Wing 2 (Front Wing)
+  ctx.save();
+  ctx.translate(2, -2);
+  ctx.rotate(-wingPhase * 0.85);
+  ctx.fillStyle = "#3d244c"; // slightly brighter front wing
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(24, -20);
+  ctx.lineTo(30, -5);
+  ctx.lineTo(20, 2);
+  ctx.lineTo(18, 12);
+  ctx.lineTo(5, 4);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // Gold claw spike at the wing joint
+  ctx.fillStyle = "#cca53d";
+  ctx.beginPath(); ctx.arc(12, -10, 2, 0, Math.PI*2); ctx.fill();
   ctx.restore();
   
+  // 3. Bat Body
+  const bodyGrad = ctx.createLinearGradient(-8, -4, 8, 4);
+  bodyGrad.addColorStop(0, "#251735"); // Deep void purple
+  bodyGrad.addColorStop(1, "#0d0615"); // Obsidian black
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath(); ctx.ellipse(0, 2, 11, 7, 0, 0, Math.PI*2); ctx.fill();
+  
+  // 4. Gargoyle Ears with pink inner detail
+  ctx.fillStyle = "#1b0f27";
+  ctx.beginPath(); ctx.moveTo(-7, -2); ctx.lineTo(-12, -12); ctx.lineTo(-3, -4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#e082b9"; // Left ear pink inner
+  ctx.beginPath(); ctx.moveTo(-6.5, -3); ctx.lineTo(-10, -9); ctx.lineTo(-4, -4.5); ctx.closePath(); ctx.fill();
+  
+  ctx.fillStyle = "#1b0f27";
+  ctx.beginPath(); ctx.moveTo(-1, -4); ctx.lineTo(3, -12); ctx.lineTo(4, -2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#e082b9"; // Right ear pink inner
+  ctx.beginPath(); ctx.moveTo(-0.5, -4.5); ctx.lineTo(2, -9); ctx.lineTo(3, -3); ctx.closePath(); ctx.fill();
+  
+  // 5. Glowing Void-Purple Slit Eyes
+  ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "#d03df5"; ctx.shadowBlur = 8;
+  ctx.beginPath(); ctx.arc(-6, 0, 2, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0; // reset shadow
+  
+  ctx.fillStyle = "#d03df5";
+  ctx.beginPath(); ctx.arc(-6, 0, 1.0, 0, Math.PI*2); ctx.fill();
+
   ctx.restore();
 }
 
@@ -2113,6 +2997,78 @@ function drawSpikes(ctx, t) {
     ctx.beginPath(); ctx.moveTo(x+4, y-10); ctx.lineTo(x+6, y-20); ctx.lineTo(x+8, y-10); ctx.fill();
     ctx.fillStyle = "#bdc3c7";
   }
+}
+
+function drawFirePit(ctx, t) {
+  // 1. Draw stylized campfire wood logs at the base
+  ctx.strokeStyle = "#5c3a21"; // Dark log color
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = "round";
+  
+  // Left log slanted up
+  ctx.beginPath();
+  ctx.moveTo(t.x + 6, t.y + 59);
+  ctx.lineTo(t.x + 30, t.y + 53);
+  ctx.stroke();
+  
+  // Right log slanted up
+  ctx.beginPath();
+  ctx.moveTo(t.x + 34, t.y + 53);
+  ctx.lineTo(t.x + 58, t.y + 59);
+  ctx.stroke();
+  
+  // Center cross log (Darker/overlapping)
+  ctx.strokeStyle = "#40220f";
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(t.x + 18, t.y + 60);
+  ctx.lineTo(t.x + 46, t.y + 54);
+  ctx.stroke();
+
+  // 2. Draw glowing ember sparks on the wood logs
+  for (let i = 0; i < 5; i++) {
+    const emberX = t.x + 10 + i * 11 + Math.sin(time * 6 + i) * 2;
+    const emberY = t.y + 52 + Math.cos(time * 8 + i) * 2;
+    ctx.fillStyle = (i % 2 === 0) ? "#e74c3c" : "#f39c12";
+    ctx.fillRect(emberX, emberY, 4, 3);
+  }
+
+  // 3. Draw animated flickering flames rising from the logs
+  for (let i = 0; i < 5; i++) {
+    const fx = t.x + 8 + i * 12;
+    const fy = t.y + 52;
+    const flamePhase = time * 18 + i * 2;
+    const fHeight = 24 + Math.sin(flamePhase) * 8;
+    const fWidth = 8 + Math.cos(flamePhase * 0.5) * 2;
+
+    ctx.save();
+    ctx.translate(fx, fy);
+
+    // Outer flame (Red/Orange)
+    ctx.fillStyle = "rgba(231, 76, 60, 0.85)";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(fWidth, -fHeight/3, 0, -fHeight);
+    ctx.quadraticCurveTo(-fWidth, -fHeight/3, 0, 0);
+    ctx.fill();
+
+    // Inner flame (Yellow/White)
+    ctx.fillStyle = "rgba(241, 196, 15, 0.95)";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(fWidth/2, -fHeight/6, 0, -fHeight * 0.6);
+    ctx.quadraticCurveTo(-fWidth/2, -fHeight/6, 0, 0);
+    ctx.fill();
+
+    ctx.restore();
+  }
+  
+  // 4. Ambient glowing fire aura
+  const glowGrad = ctx.createRadialGradient(t.x + 32, t.y + 40, 2, t.x + 32, t.y + 40, 48);
+  glowGrad.addColorStop(0, "rgba(230, 126, 34, 0.2)");
+  glowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(t.x - 16, t.y, 96, 64);
 }
 
 function drawTorch(ctx, px, py, time) {
@@ -2164,7 +3120,15 @@ function drawPlayer(ctx) {
   const legSwingBack = Math.sin(walkPhase) * 8 * walkAmount;
 
   ctx.save();
-  ctx.translate(player.x + player.w/2, player.y + player.h);
+  let deadOffsetY = 0;
+  if (playerDead) {
+    const scaleVal = golemEmpowered ? 0.85 : 0.6;
+    deadOffsetY = -50 * scaleVal;
+  }
+  ctx.translate(player.x + player.w/2, player.y + player.h + deadOffsetY);
+  if (playerDead) {
+    ctx.rotate(player.facingRight ? Math.PI / 2 : -Math.PI / 2);
+  }
   if (!player.facingRight) ctx.scale(-1, 1);
   if (golemEmpowered) {
     ctx.scale(0.85, 0.85); // Golem grows significantly!
@@ -2285,59 +3249,130 @@ function drawPortal(px, py) {
   // --- HIGH FIDELITY PREMIUM PORTAL DRAWING ---
   ctx.save();
   
-  // 1. Pulsing Ambient Outer Glow
-  const ambientGlow = ctx.createRadialGradient(cx, cy, ringR, cx, cy, outerR + 25);
-  ambientGlow.addColorStop(0, `${core}55`);
-  ambientGlow.addColorStop(0.5, `${core}22`);
-  ambientGlow.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = ambientGlow;
-  ctx.beginPath(); ctx.arc(cx, cy, outerR + 25, 0, Math.PI * 2); ctx.fill();
+  if (currentStage === 9) {
+    // --- HIGH-FIDELITY GEOMETRIC HEXAGONAL LIQUIDITY GATEWAY FOR PORT MARKETS ---
+    const pulse = 0.5 + Math.sin(time * 4) * 0.3;
+    const outerGlow = ctx.createRadialGradient(cx, cy, 35, cx, cy, 75);
+    outerGlow.addColorStop(0, "rgba(255, 215, 0, 0.45)");
+    outerGlow.addColorStop(0.5, "rgba(255, 215, 0, 0.15)");
+    outerGlow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = outerGlow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 75, 0, Math.PI * 2);
+    ctx.fill();
 
-  // 2. Portal Metallic Stone Ring Body
-  const ringGrad = ctx.createRadialGradient(cx - 15, cy - 20, 10, cx, cy, outerR);
-  ringGrad.addColorStop(0, "#5a6a8a");
-  ringGrad.addColorStop(0.4, "#2c3e50");
-  ringGrad.addColorStop(0.8, "#1a252f");
-  ringGrad.addColorStop(1, "#0d1318");
-  ctx.fillStyle = ringGrad;
-  ctx.beginPath(); ctx.arc(cx, cy, outerR, 0, Math.PI * 2); ctx.fill();
+    // Hexagonal Metallic Outer Frame
+    ctx.shadowColor = "#ffd700";
+    ctx.shadowBlur = 12 + pulse * 6;
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.75)";
+    ctx.lineWidth = 4;
+    ctx.fillStyle = "#16171d"; // Polished black obsidian core
+    
+    const drawHex = (r) => {
+      ctx.beginPath();
+      for(let i=0; i<6; i++) {
+        const angle = i * Math.PI / 3 - Math.PI/6; // Flat top/bottom
+        const hx = cx + Math.cos(angle) * r;
+        const hy = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+      }
+      ctx.closePath();
+    };
+    
+    drawHex(52);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0; // Reset shadow for inner frames
+    
+    // Inner neon frames
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.35)";
+    ctx.lineWidth = 1.5;
+    drawHex(42);
+    ctx.stroke();
+    
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.18)";
+    drawHex(32);
+    ctx.stroke();
+    
+    // Interlocking gold sunburst / liquidity grid inside the hexagonal core
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.12)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<6; i++) {
+       const angle = i * Math.PI / 3 - Math.PI/6;
+       ctx.beginPath();
+       ctx.moveTo(cx, cy);
+       ctx.lineTo(cx + Math.cos(angle)*32, cy + Math.sin(angle)*32);
+       ctx.stroke();
+    }
+    
+    // Symmetrical Chevrons inside the portal core representing order matching
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.32)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    // Left pointing chevron
+    ctx.moveTo(cx - 15, cy - 8);
+    ctx.lineTo(cx - 5, cy);
+    ctx.lineTo(cx - 15, cy + 8);
+    // Right pointing chevron
+    ctx.moveTo(cx + 15, cy - 8);
+    ctx.lineTo(cx + 5, cy);
+    ctx.lineTo(cx + 15, cy + 8);
+    ctx.stroke();
+  } else {
+    // 1. Pulsing Ambient Outer Glow
+    const ambientGlow = ctx.createRadialGradient(cx, cy, ringR, cx, cy, outerR + 25);
+    ambientGlow.addColorStop(0, `${core}55`);
+    ambientGlow.addColorStop(0.5, `${core}22`);
+    ambientGlow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = ambientGlow;
+    ctx.beginPath(); ctx.arc(cx, cy, outerR + 25, 0, Math.PI * 2); ctx.fill();
 
-  // Draw subtle cracks / brick lines on the metallic ring itself
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
-  ctx.lineWidth = 1;
-  for(let i=0; i<8; i++) {
-     const angle = i * Math.PI / 4;
-     ctx.beginPath();
-     ctx.moveTo(cx + Math.cos(angle)*ringR, cy + Math.sin(angle)*ringR);
-     ctx.lineTo(cx + Math.cos(angle)*outerR, cy + Math.sin(angle)*outerR);
-     ctx.stroke();
+    // 2. Portal Metallic Stone Ring Body
+    const ringGrad = ctx.createRadialGradient(cx - 15, cy - 20, 10, cx, cy, outerR);
+    ringGrad.addColorStop(0, "#5a6a8a");
+    ringGrad.addColorStop(0.4, "#2c3e50");
+    ringGrad.addColorStop(0.8, "#1a252f");
+    ringGrad.addColorStop(1, "#0d1318");
+    ctx.fillStyle = ringGrad;
+    ctx.beginPath(); ctx.arc(cx, cy, outerR, 0, Math.PI * 2); ctx.fill();
+
+    // Draw subtle cracks / brick lines on the metallic ring itself
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    for(let i=0; i<8; i++) {
+       const angle = i * Math.PI / 4;
+       ctx.beginPath();
+       ctx.moveTo(cx + Math.cos(angle)*ringR, cy + Math.sin(angle)*ringR);
+       ctx.lineTo(cx + Math.cos(angle)*outerR, cy + Math.sin(angle)*outerR);
+       ctx.stroke();
+    }
+
+    // 3. Inner Glowing Neon Ring
+    ctx.strokeStyle = core;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = core;
+    ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(cx, cy, ringR, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0; // reset shadow
   }
 
-  // 3. Inner Glowing Neon Ring
-  ctx.strokeStyle = core;
-  ctx.lineWidth = 3;
-  ctx.shadowColor = core;
-  ctx.shadowBlur = 15;
-  ctx.beginPath(); ctx.arc(cx, cy, ringR, 0, Math.PI * 2); ctx.stroke();
-  ctx.shadowBlur = 0; // reset shadow
-
-  // 4. The 4 Rhombus Runes (Baklava) - Larger, detailed, and glowing
-  ctx.fillStyle = core;
-  ctx.shadowColor = core;
-  ctx.shadowBlur = 10;
+  // 4. The 4 Rotating Project Logos - Glowing and revolving around the portal!
   for(let i=0; i<4; i++) {
      const angle = (i * Math.PI / 2) + Math.PI/4 + (time * 0.4);
      const rx = cx + Math.cos(angle) * (outerR + 18);
      const ry = cy + Math.sin(angle) * (outerR + 18);
-     ctx.save(); ctx.translate(rx, ry); ctx.rotate(time * 1.5 + i);
-     // Rhombus shape
-     ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(9, 0); ctx.lineTo(0, 9); ctx.lineTo(-9, 0); ctx.fill();
-     // Small inner core cut-out
-     ctx.fillStyle = "#fff";
-     ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(4, 0); ctx.lineTo(0, 4); ctx.lineTo(-4, 0); ctx.fill();
+     ctx.save();
+     ctx.translate(rx, ry);
+     ctx.rotate(time * 1.5 + i);
+     ctx.scale(0.48, 0.48); // Scale down the logo emblem perfectly
+     
+     // Draw the project logo centered at origin!
+     drawBrandLogo(ctx, -32, -29, currentStage, time);
+     
      ctx.restore();
   }
-  ctx.shadowBlur = 0;
 
   // 5. Procedural Ancient Glyphs along the inner rim (glowing dots & ticks)
   ctx.fillStyle = "rgba(255,255,255,0.7)";
@@ -2378,7 +3413,7 @@ function drawPortal(px, py) {
     swirl.addColorStop(0.4, `${core}aa`);
     swirl.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = swirl; 
-    ctx.beginPath(); ctx.arc(cx, cy, innerR, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, innerR, 0, Math.PI * 2); ctx.fill();
   }
 
   ctx.restore();
@@ -2402,16 +3437,15 @@ function getColumnVerticalBounds(x) {
     startY++;
   }
   
-  let endY = startY;
-  // Scan down to find the floor platform (first solid cell)
-  // Only standard solid wall blocks (tile === 1) represent structural ground
-  while (endY < mapHeight && endY < map.length) {
-    if (!map[endY]) break;
-    const tile = map[endY][x];
-    if (tile === 1) {
+  let endY = mapHeight - 1;
+  while (endY > startY) {
+    if (map[endY] && map[endY][x] === 1) {
+      while (endY > startY && map[endY - 1] && map[endY - 1][x] === 1) {
+        endY--;
+      }
       break;
     }
-    endY++;
+    endY--;
   }
   
   return {
@@ -2487,7 +3521,7 @@ function drawThematicPlatformBackdrop(ctx, stage, time) {
     
     // Top-right
     ctx.moveTo(bx + bw * 0.7, cy);
-    ctx.lineTo(bx + bw);
+    ctx.lineTo(bx + bw, cy);
     ctx.lineTo(bx + bw, cy + bh * 0.35);
     
     // Bottom-left
@@ -2575,9 +3609,9 @@ function drawThematicPillar(ctx, cx, topY, bottomY, stage, time) {
     shaftGrad.addColorStop(1, "#a38258");
 
     ctx.fillStyle = shaftGrad;
-    ctx.fillRect(cx - 18, topY, 36, height);
+    ctx.fillRect(cx - 18, topY + 30, 36, height - 30);
     ctx.strokeStyle = "rgba(139, 90, 43, 0.4)"; ctx.lineWidth = 1.5;
-    ctx.strokeRect(cx - 18, topY, 36, height);
+    ctx.strokeRect(cx - 18, topY + 30, 36, height - 30);
 
     // Hieroglyphs carved on the shaft
     ctx.strokeStyle = "rgba(139, 90, 43, 0.35)"; ctx.lineWidth = 1.5;
@@ -2593,13 +3627,13 @@ function drawThematicPillar(ctx, cx, topY, bottomY, stage, time) {
     // Lotus capital at the top
     ctx.fillStyle = "#2e7d32"; // Green lotus leaves
     ctx.beginPath();
-    ctx.arc(cx, topY + 24, 20, 0, Math.PI, true);
+    ctx.arc(cx, topY + 20, 20, 0, Math.PI, true);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle = "rgba(139, 90, 43, 0.5)"; ctx.stroke();
 
     // Gold/Red rings under the capital
-    ctx.fillStyle = "#d84315"; ctx.fillRect(cx - 20, topY + 24, 40, 6);
-    ctx.fillStyle = "#d4af37"; ctx.fillRect(cx - 18, topY + 30, 36, 4);
+    ctx.fillStyle = "#d84315"; ctx.fillRect(cx - 20, topY + 20, 40, 6);
+    ctx.fillStyle = "#d4af37"; ctx.fillRect(cx - 18, topY + 26, 36, 4);
 
     // Large base block
     ctx.fillStyle = "#a38258";
@@ -2929,6 +3963,52 @@ function drawThematicPillar(ctx, cx, topY, bottomY, stage, time) {
     ctx.fillStyle = "#ffd700";
     ctx.fillRect(cx - 24, bottomY - 18, 48, 18);
     ctx.strokeRect(cx - 24, bottomY - 18, 48, 18);
+  } else if (stage === 10) { // Sedona - Samarkand Glazed Turquoise Columns
+    // Glazed turquoise gradient shaft
+    const shaftGrad = ctx.createLinearGradient(cx - 18, 0, cx + 18, 0);
+    shaftGrad.addColorStop(0, "#004b6e");
+    shaftGrad.addColorStop(0.3, "#00ced1");
+    shaftGrad.addColorStop(0.7, "#40e0d0");
+    shaftGrad.addColorStop(1, "#004b6e");
+
+    ctx.fillStyle = shaftGrad;
+    ctx.fillRect(cx - 18, topY, 36, height);
+    ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 1.5; // Gold outer trim
+    ctx.strokeRect(cx - 18, topY, 36, height);
+
+    // Dark cobalt vertical flutes
+    ctx.fillStyle = "#002d4a";
+    ctx.fillRect(cx - 10, topY, 2, height);
+    ctx.fillRect(cx - 3, topY, 2, height);
+    ctx.fillRect(cx + 4, topY, 2, height);
+
+    // Horizontal gold bands/collars
+    ctx.fillStyle = "#ffd700";
+    ctx.fillRect(cx - 20, topY + 100, 40, 6);
+    ctx.strokeRect(cx - 20, topY + 100, 40, 6);
+    ctx.fillRect(cx - 20, topY + 240, 40, 6);
+    ctx.strokeRect(cx - 20, topY + 240, 40, 6);
+
+    // Double-arched Timurid-style capital
+    ctx.fillStyle = "#ffd700";
+    ctx.beginPath();
+    ctx.moveTo(cx - 24, topY + 10);
+    ctx.lineTo(cx + 24, topY + 10);
+    ctx.lineTo(cx + 18, topY + 24);
+    ctx.lineTo(cx - 18, topY + 24);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#00ced1"; ctx.stroke();
+
+    ctx.fillStyle = "#003b5c"; // Deep blue top slab
+    ctx.fillRect(cx - 26, topY, 52, 10);
+    ctx.strokeRect(cx - 26, topY, 52, 10);
+
+    // Stepped royal blue glazed brick base
+    ctx.fillStyle = "#003b5c";
+    ctx.fillRect(cx - 22, bottomY - 20, 44, 20);
+    ctx.strokeRect(cx - 22, bottomY - 20, 44, 20);
+    ctx.fillStyle = "#ffd700";
+    ctx.fillRect(cx - 24, bottomY - 14, 48, 4);
   }
 
   ctx.restore();
@@ -3063,7 +4143,7 @@ function drawThematicSanctum(ctx, stageIndex, time) {
        
        // Lotus bud capital
        ctx.fillStyle = "#2e7d32"; 
-       ctx.beginPath(); ctx.arc(cx, 184, 16, 0, Math.PI, true); ctx.closePath(); ctx.fill();
+       ctx.beginPath(); ctx.arc(cx, 188, 16, 0, Math.PI, true); ctx.closePath(); ctx.fill();
        ctx.fillStyle = "#d84315"; ctx.fillRect(cx - 14, 188, 28, 4);
     });
 
@@ -3787,7 +4867,235 @@ function drawThematicSanctum(ctx, stageIndex, time) {
        });
        
        ctx.restore();
-    });
+     });
+  } else if (stageIndex === 10) { // Sanctum / Sedona: Samarkand Palace
+      // Lapis lazuli backdrop
+      ctx.fillStyle = "#06132b"; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Turquoise tiles
+      ctx.strokeStyle = "rgba(0, 235, 212, 0.08)";
+      ctx.lineWidth = 1.5;
+      for (let y = 40; y < 448; y += 60) {
+        ctx.beginPath();
+        for (let x = 0; x < 1280; x += 120) {
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 60, y + 30);
+          ctx.lineTo(x, y + 60);
+          ctx.lineTo(x - 60, y + 30);
+          ctx.closePath();
+        }
+        ctx.stroke();
+      }
+      
+      // 0. Volumetric subtle white halo glow behind the arch
+      ctx.save();
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = 45;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.beginPath();
+      ctx.moveTo(704 - 165, 452);
+      ctx.lineTo(704 - 165, 275);
+      ctx.quadraticCurveTo(704 - 165, 150, 704, 95);
+      ctx.quadraticCurveTo(704 + 165, 150, 704 + 165, 275);
+      ctx.lineTo(704 + 165, 452);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Central horseshoe Timurid arch
+      ctx.save();
+      const pulse = (Math.sin(time * 3) + 1) / 2;
+      ctx.shadowColor = "#00ebd4";
+      ctx.shadowBlur = 12 + pulse * 8;
+      ctx.strokeStyle = "rgba(0, 235, 212, 0.4)";
+      ctx.lineWidth = 5;
+      ctx.fillStyle = "rgba(0, 235, 212, 0.04)";
+      
+      ctx.beginPath();
+      ctx.moveTo(704 - 150, 452);
+      ctx.lineTo(704 - 150, 280);
+      ctx.quadraticCurveTo(704 - 150, 160, 704, 110);
+      ctx.quadraticCurveTo(704 + 150, 160, 704 + 150, 280);
+      ctx.lineTo(704 + 150, 452);
+      ctx.fill();
+      ctx.stroke();
+      
+      // High-Fidelity Timurid Medallion/Rosette Motif (Inspired by the uploaded image)
+       ctx.save();
+       ctx.translate(704, 240);
+       ctx.scale(0.7, 0.7);
+       
+       // 1. Outer Octagonal / 8-Pointed Star Border (Gold & Dark Emerald Green)
+       ctx.strokeStyle = "#ffd700";
+       ctx.lineWidth = 3.5;
+       ctx.shadowColor = "#00ebd4";
+       ctx.shadowBlur = 10;
+       ctx.beginPath();
+       for (let i = 0; i < 8; i++) {
+         const angle = (i * Math.PI) / 4;
+         const x1 = Math.cos(angle) * 125;
+         const y1 = Math.sin(angle) * 125;
+         const nextAngle = ((i + 1) * Math.PI) / 4;
+         const x2 = Math.cos(nextAngle) * 125;
+         const y2 = Math.sin(nextAngle) * 125;
+         
+         // Indent to make it a beautiful star shape
+         const midAngle = angle + Math.PI / 8;
+         const mx = Math.cos(midAngle) * 88;
+         const my = Math.sin(midAngle) * 88;
+         
+         if (i === 0) ctx.moveTo(x1, y1);
+         ctx.lineTo(mx, my);
+         ctx.lineTo(x2, y2);
+       }
+       ctx.closePath();
+       ctx.fillStyle = "#0a2e1c"; // Rich dark emerald green background
+       ctx.fill();
+       ctx.stroke();
+       ctx.shadowBlur = 0; // Reset shadow blur
+       
+       // 2. Swirling Golden Vines in the Emerald Green Area (Arabesque/Rumi scrolls)
+       ctx.strokeStyle = "rgba(212, 175, 55, 0.4)"; // Golden/bronze vines
+       ctx.lineWidth = 1.5;
+       for (let i = 0; i < 8; i++) {
+         const angle = (i * Math.PI) / 4;
+         ctx.save();
+         ctx.rotate(angle);
+         ctx.beginPath();
+         ctx.moveTo(60, 0);
+         ctx.bezierCurveTo(75, -30, 105, -25, 110, 5);
+         ctx.bezierCurveTo(112, 20, 90, 40, 75, 25);
+         ctx.stroke();
+         
+         // Draw elegant gold leaves
+         ctx.fillStyle = "rgba(212, 175, 55, 0.6)";
+         ctx.beginPath();
+         ctx.ellipse(85, -5, 6, 3, Math.PI / 6, 0, Math.PI * 2);
+         ctx.fill();
+         ctx.beginPath();
+         ctx.ellipse(100, 15, 4, 2, -Math.PI / 4, 0, Math.PI * 2);
+         ctx.fill();
+         ctx.restore();
+       }
+       
+       // 3. Middle Star Ring (Lapis Lazuli Navy Blue & Gold Ribbon)
+       ctx.fillStyle = "#0c1a40"; // Deep lapis lazuli navy blue
+       ctx.strokeStyle = "#ffd700";
+       ctx.lineWidth = 2.5;
+       ctx.beginPath();
+       for (let i = 0; i < 8; i++) {
+         const angle = (i * Math.PI) / 4 + Math.PI / 8;
+         const x1 = Math.cos(angle) * 82;
+         const y1 = Math.sin(angle) * 82;
+         const nextAngle = ((i + 1) * Math.PI) / 4 + Math.PI / 8;
+         const x2 = Math.cos(nextAngle) * 82;
+         const y2 = Math.sin(nextAngle) * 82;
+         
+         const midAngle = angle + Math.PI / 8;
+         const mx = Math.cos(midAngle) * 58;
+         const my = Math.sin(midAngle) * 58;
+         
+         if (i === 0) ctx.moveTo(x1, y1);
+         ctx.lineTo(mx, my);
+         ctx.lineTo(x2, y2);
+       }
+       ctx.closePath();
+       ctx.fill();
+       ctx.stroke();
+       
+       // 4. Nested Turquoise Star Ribbon (Interlaced Girih)
+       ctx.strokeStyle = "#00ebd4";
+       ctx.lineWidth = 1.8;
+       ctx.beginPath();
+       for (let i = 0; i < 8; i++) {
+         const angle = (i * Math.PI) / 4;
+         const x1 = Math.cos(angle) * 58;
+         const y1 = Math.sin(angle) * 58;
+         const x2 = Math.cos(angle + Math.PI / 4) * 58;
+         const y2 = Math.sin(angle + Math.PI / 4) * 58;
+         ctx.moveTo(x1, y1);
+         ctx.lineTo(x2, y2);
+       }
+       ctx.stroke();
+ 
+       // 5. Central Golden Hub (Pulsating Star Center)
+       const starPulse = 12 + Math.sin(time * 3) * 2;
+       ctx.fillStyle = "#ffd700";
+       ctx.beginPath();
+       for (let i = 0; i < 16; i++) {
+         const angle = (i * Math.PI) / 8;
+         const r = i % 2 === 0 ? starPulse : starPulse / 2;
+         const x = Math.cos(angle) * r;
+         const y = Math.sin(angle) * r;
+         if (i === 0) ctx.moveTo(x, y);
+         else ctx.lineTo(x, y);
+       }
+       ctx.closePath();
+       ctx.fill();
+       
+       // 6. Intricate Turquoise Arabesque Swirls inside Lapis Lazuli Area
+       ctx.strokeStyle = "rgba(0, 235, 212, 0.55)";
+       ctx.lineWidth = 1.2;
+       for (let i = 0; i < 8; i++) {
+         const angle = (i * Math.PI) / 4;
+         ctx.save();
+         ctx.rotate(angle);
+         ctx.beginPath();
+         ctx.moveTo(25, 0);
+         ctx.quadraticCurveTo(40, -15, 45, 10);
+         ctx.quadraticCurveTo(35, 25, 25, 15);
+         ctx.stroke();
+         
+         ctx.fillStyle = "#00ebd4";
+         ctx.beginPath();
+         ctx.arc(45, 5, 2.5, 0, Math.PI * 2);
+         ctx.fill();
+         ctx.restore();
+       }
+       
+       ctx.restore();
+       ctx.restore();
+       
+       // Marble and Gold columns (Shifted down by 8px to perfectly ground them onto the platform floor)
+       [128, 512, 896, 1280].forEach(cx => {
+          // Base
+          ctx.fillStyle = "#b7950b";
+          ctx.fillRect(cx - 24, 440, 48, 12);
+          ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 1.5;
+          ctx.strokeRect(cx - 24, 440, 48, 12);
+          
+          // Shaft
+          ctx.fillStyle = "#f5f6fa";
+          ctx.fillRect(cx - 16, 188, 32, 252);
+          ctx.strokeStyle = "rgba(0, 235, 212, 0.3)"; ctx.lineWidth = 1.2;
+          ctx.strokeRect(cx - 16, 188, 32, 252);
+          
+          // Spiral gold bands
+          ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          for (let cy = 198; cy < 428; cy += 24) {
+            ctx.moveTo(cx - 16, cy);
+            ctx.quadraticCurveTo(cx, cy + 6, cx + 16, cy + 12);
+          }
+          ctx.stroke();
+          
+          // Stalactite capitals
+          ctx.fillStyle = "#00ebd4";
+          ctx.beginPath();
+          ctx.moveTo(cx - 22, 188);
+          ctx.lineTo(cx + 22, 188);
+          ctx.lineTo(cx + 16, 176);
+          ctx.lineTo(cx - 16, 176);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 1.0;
+          ctx.stroke();
+          
+          // Cap
+          ctx.fillStyle = "#ffd700";
+          ctx.fillRect(cx - 24, 170, 48, 6);
+       });
   }
 
   ctx.restore();
@@ -3938,6 +5246,184 @@ function drawPalaceArches(ctx, time) {
   ctx.restore();
 }
 
+function drawDragon(ctx, cx, cy, time) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  
+  // Patrol direction based on the sine of time * 0.8
+  const dir = Math.sin(time * 0.8) > 0 ? -1 : 1;
+  ctx.scale(dir, 1);
+  
+  // If dying, fade out and spin/fall down dramatically!
+  if (dragonDead) {
+    ctx.globalAlpha = Math.max(0, 1.0 - dragonDeadTime / 60);
+    ctx.translate(0, dragonDeadTime * 3.5);
+    ctx.rotate(dragonDeadTime * 0.04 * dir);
+  }
+  
+  // Apply a dramatic red-orange flinch recoil animation when hit!
+  if (dragonHitFlash > 0) {
+    dragonHitFlash--;
+    ctx.shadowColor = "#ff3300"; ctx.shadowBlur = 15;
+    ctx.translate(-8, -4); // recoil displacement
+    ctx.fillStyle = "rgba(231, 76, 60, 0.4)";
+  }
+  
+  // 1. Dragon Wings (Back Wing)
+  ctx.save();
+  ctx.translate(-15, -15);
+  ctx.rotate(-Math.sin(time * 7) * 0.5 - 0.2);
+  ctx.fillStyle = "#78281f"; // Darker crimson for back wing
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-30, -50, -60, -30, -80, 10);
+  ctx.bezierCurveTo(-50, 0, -20, 10, 0, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Serpentine Body
+  ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 14; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(-30, 20, -50, 0);
+  ctx.quadraticCurveTo(-70, -20, -90, 10); // Long sleek tail base
+  ctx.stroke();
+
+  // 3. Spinal Spikes: FIRMLY attached to the body curve!
+  ctx.fillStyle = "#cca53d"; // Golden spine spikes
+  const spikes = [
+    { sx: -10, sy: 8 },
+    { sx: -25, sy: 13 },
+    { sx: -40, sy: 8 },
+    { sx: -55, sy: -6 },
+    { sx: -70, sy: -4 }
+  ];
+  for (let sp of spikes) {
+    ctx.beginPath();
+    ctx.moveTo(sp.sx - 3, sp.sy - 3);
+    ctx.lineTo(sp.sx - 5, sp.sy - 15); // spike point sticking upward/backward
+    ctx.lineTo(sp.sx - 8, sp.sy - 1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 4. Swinging reptilian tail tip with a spade/crystal blade
+  ctx.save();
+  ctx.translate(-90, 10);
+  ctx.rotate(Math.sin(time * 5) * 0.4);
+  ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 8;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-20, 15); ctx.stroke(); // tail tip segment
+  // Spade tip
+  ctx.fillStyle = "#cca53d";
+  ctx.beginPath();
+  ctx.moveTo(-20, 15); ctx.lineTo(-32, 10); ctx.lineTo(-38, 22); ctx.lineTo(-26, 25);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // 5. Dragon Neck & Head
+  ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(20, -20, 25, -40); // neck
+  ctx.stroke();
+  
+  ctx.save();
+  ctx.translate(25, -40);
+  ctx.rotate(Math.sin(time * 3) * 0.15 - 0.1);
+
+  // Curved elegant golden horns curving backward from head
+  ctx.strokeStyle = "#cca53d"; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(-8, -8, 14, Math.PI, Math.PI * 1.6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(-12, -4, 10, Math.PI, Math.PI * 1.6);
+  ctx.stroke();
+
+  // Dragon Head Shape (snout, jaw)
+  ctx.fillStyle = "#962d22"; // Crimson head plates
+  ctx.beginPath();
+  ctx.moveTo(-15, 0);
+  ctx.lineTo(15, -15);
+  ctx.lineTo(32, -8); // Nose tip
+  ctx.lineTo(15, 8); // Chin
+  ctx.closePath();
+  ctx.fill();
+  
+  // Upper Snout Plate
+  ctx.fillStyle = "#c0392b";
+  ctx.beginPath();
+  ctx.moveTo(-10, -5); ctx.lineTo(12, -15); ctx.lineTo(30, -8); ctx.lineTo(10, -2);
+  ctx.closePath(); ctx.fill();
+
+  // Terrifying glowing slit eye
+  ctx.fillStyle = "#f39c12";
+  ctx.beginPath();
+  ctx.ellipse(5, -6, 5, 2.5, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(6, -6, 1.2, 0, Math.PI*2); // slit highlight
+  ctx.fill();
+
+  // Jaw breathing fire (Ağzından Alevler Saçan)
+  const isBreathing = (time % 4) < 2.2;
+  if (isBreathing) {
+    ctx.save();
+    // Mouth open jaw angle
+    ctx.fillStyle = "#962d22";
+    ctx.beginPath();
+    ctx.moveTo(10, 2); ctx.lineTo(25, 12); ctx.lineTo(8, 6);
+    ctx.closePath(); ctx.fill();
+
+    // Fire flame particles
+    const fireTime = time * 25;
+    for (let f = 0; f < 6; f++) {
+      ctx.save();
+      ctx.translate(22, 5);
+      const angle = 0.2 + Math.sin(fireTime + f * 5) * 0.35;
+      ctx.rotate(angle);
+      const flen = 40 + Math.sin(fireTime + f * 2) * 25;
+      const grad = ctx.createLinearGradient(0, 0, flen, 0);
+      grad.addColorStop(0, "rgba(255, 230, 0, 0.9)");  // Bright yellow core
+      grad.addColorStop(0.3, "rgba(255, 100, 0, 0.85)"); // Vibrant orange
+      grad.addColorStop(0.8, "rgba(231, 76, 60, 0.5)");  // Dissipating red
+      grad.addColorStop(1, "rgba(231, 76, 60, 0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, -3);
+      ctx.quadraticCurveTo(flen * 0.5, -15, flen, 0);
+      ctx.quadraticCurveTo(flen * 0.5, 15, 0, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  ctx.restore(); // Head restore
+
+  // 6. Dragon Wings (Front Wing - overlaps body)
+  ctx.save();
+  ctx.translate(-10, -10);
+  ctx.rotate(Math.sin(time * 7) * 0.5);
+  ctx.fillStyle = "#c0392b"; // Brighter crimson for front wing
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(-35, -55, -70, -35, -90, 15);
+  ctx.bezierCurveTo(-60, 5, -25, 15, 0, 0);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Golden Wing Strut lines
+  ctx.strokeStyle = "#dfb96c"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-50, -35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-75, -15); ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
 function drawOrnateCarpet(ctx, x, y, width, height) {
   ctx.save();
   ctx.fillStyle = "#800000";
@@ -4081,6 +5567,277 @@ function drawHourglass(ctx, px, py, time) {
   ctx.restore();
 }
 
+function drawTreasurePile(ctx, px, py, time) {
+  ctx.save();
+  
+  // 1. Shimmer/glint glow
+  const glint = (Math.sin(time * 4) + 1) / 2;
+  ctx.shadowColor = "rgba(255, 215, 0, 0.45)";
+  ctx.shadowBlur = 12 + glint * 10;
+  
+  // 2. Base gold pile (curved hump)
+  ctx.fillStyle = "#d4af37"; // rich gold
+  ctx.strokeStyle = "#85581a";
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(px, py + 48);
+  ctx.quadraticCurveTo(px + 25, py + 10, px + 50, py + 48); // main pile
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // Secondary overlapping pile
+  ctx.beginPath();
+  ctx.moveTo(px + 20, py + 48);
+  ctx.quadraticCurveTo(px + 45, py + 20, px + 70, py + 48);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.shadowBlur = 0; // reset
+  
+  // 3. Draw layered coins
+  ctx.fillStyle = "#ffd700"; // bright gold
+  ctx.strokeStyle = "#b8860b";
+  ctx.lineWidth = 1;
+  
+  const coins = [
+    {dx: 10, dy: 44, r: 4},
+    {dx: 18, dy: 42, r: 4.5},
+    {dx: 28, dy: 45, r: 4},
+    {dx: 38, dy: 43, r: 4},
+    {dx: 48, dy: 44, r: 4.5},
+    {dx: 14, dy: 38, r: 4},
+    {dx: 24, dy: 35, r: 4.5},
+    {dx: 34, dy: 37, r: 4},
+    {dx: 44, dy: 39, r: 4},
+    {dx: 22, dy: 28, r: 4},
+    {dx: 32, dy: 30, r: 4.5},
+    {dx: 28, dy: 22, r: 4},
+    {dx: 40, dy: 42, r: 4},
+    {dx: 50, dy: 38, r: 4.5},
+    {dx: 60, dy: 44, r: 4},
+    {dx: 45, dy: 32, r: 4},
+    {dx: 55, dy: 35, r: 4.5},
+  ];
+  
+  for (let coin of coins) {
+    ctx.beginPath();
+    ctx.arc(px + coin.dx, py + coin.dy, coin.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  
+  // 4. Golden Goblet/Chalice standing on the pile
+  ctx.fillStyle = "#ffd700";
+  ctx.strokeStyle = "#85581a";
+  ctx.lineWidth = 1;
+  
+  const gx = px + 28;
+  const gy = py + 12;
+  ctx.beginPath();
+  ctx.moveTo(gx - 6, gy);
+  ctx.lineTo(gx + 6, gy);
+  ctx.lineTo(gx + 4, gy + 8);
+  ctx.lineTo(gx - 4, gy + 8);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(gx, gy + 8);
+  ctx.lineTo(gx, gy + 14);
+  ctx.moveTo(gx - 4, gy + 14);
+  ctx.lineTo(gx + 4, gy + 14);
+  ctx.stroke();
+  
+  // Ruby inside goblet
+  ctx.fillStyle = "#e74c3c";
+  ctx.beginPath();
+  ctx.arc(gx, gy + 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 5. Sparkling gems
+  const gemPulse = Math.abs(Math.sin(time * 3 + px));
+  ctx.fillStyle = `rgba(255, 120, 180, ${0.4 + gemPulse * 0.6})`;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.lineWidth = 0.8;
+  
+  ctx.beginPath();
+  ctx.moveTo(px + 15, py + 34);
+  ctx.lineTo(px + 19, py + 31);
+  ctx.lineTo(px + 23, py + 34);
+  ctx.lineTo(px + 19, py + 37);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  
+  ctx.fillStyle = `rgba(231, 76, 60, ${0.5 + gemPulse * 0.5})`;
+  ctx.beginPath();
+  ctx.moveTo(px + 48, py + 30);
+  ctx.lineTo(px + 52, py + 26);
+  ctx.lineTo(px + 56, py + 30);
+  ctx.lineTo(px + 52, py + 34);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  
+  ctx.restore();
+}
+
+function drawEgyptianSarcophagus(ctx, px, py, time) {
+  ctx.save();
+  // 1. Royal gold outer glow
+  const pulse = (Math.sin(time * 3.5) + 1) / 2;
+  ctx.shadowColor = `rgba(212, 175, 55, ${0.45 + pulse * 0.3})`;
+  ctx.shadowBlur = 18;
+  
+  // 2. Base Silhouette (Golden body)
+  ctx.fillStyle = "#d4af37"; // Rich pharaoh gold
+  ctx.strokeStyle = "#85581a";
+  ctx.lineWidth = 2.5;
+  
+  ctx.beginPath();
+  // Head dome
+  ctx.arc(px + 24, py + 20, 18, Math.PI, 0); 
+  // Shoulders flare
+  ctx.bezierCurveTo(px + 42, py + 20, px + 46, py + 36, px + 38, py + 50);
+  // Narrow down to feet
+  ctx.lineTo(px + 32, py + 95);
+  // Rounded feet base
+  ctx.lineTo(px + 16, py + 95);
+  // Left side narrow up to shoulder
+  ctx.lineTo(px + 10, py + 50);
+  ctx.bezierCurveTo(px + 2, py + 20, px + 6, py + 20, px + 6, py + 20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.shadowBlur = 0; // reset shadow for fine details
+
+  // 3. Nemes Headdress Stripes (Classic blue lapis and gold stripes)
+  ctx.fillStyle = "#1e4870"; // Lapis blue
+  ctx.beginPath();
+  ctx.arc(px + 24, py + 20, 17, Math.PI, 0);
+  ctx.lineTo(px + 41, py + 42);
+  ctx.lineTo(px + 34, py + 42);
+  ctx.lineTo(px + 30, py + 28);
+  ctx.lineTo(px + 18, py + 28);
+  ctx.lineTo(px + 14, py + 42);
+  ctx.lineTo(px + 7, py + 42);
+  ctx.closePath();
+  ctx.fill();
+
+  // Gold stripes on Nemes headdress
+  ctx.strokeStyle = "#ffd700";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let angle = Math.PI; angle <= Math.PI * 2; angle += 0.28) {
+    const cosVal = Math.cos(angle);
+    const sinVal = Math.sin(angle);
+    ctx.moveTo(px + 24 + cosVal * 8, py + 20 + sinVal * 8);
+    ctx.lineTo(px + 24 + cosVal * 17, py + 20 + sinVal * 17);
+  }
+  ctx.stroke();
+
+  // 4. Pharaoh's Gold Mask & Face
+  ctx.fillStyle = "#ffe29c"; // Smooth golden face skin
+  ctx.beginPath();
+  ctx.arc(px + 24, py + 16, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#85581a";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // Black Kohl Eyes
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  ctx.arc(px + 21, py + 15, 1, 0, Math.PI*2);
+  ctx.arc(px + 27, py + 15, 1, 0, Math.PI*2);
+  ctx.fill();
+
+  // Divine Long Pharaoh Beard
+  ctx.fillStyle = "#1c2833"; // Deep obsidian blue-black
+  ctx.strokeStyle = "#ffd700";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(px + 22, py + 23);
+  ctx.lineTo(px + 26, py + 23);
+  ctx.lineTo(px + 25, py + 37);
+  ctx.lineTo(px + 23, py + 37);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 5. Ornate Folded Chest Plate & Crossed Arms
+  // Coral red collar ring
+  ctx.strokeStyle = "#c0392b";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(px + 24, py + 22, 11, 0, Math.PI);
+  ctx.stroke();
+  // Turquoise ring
+  ctx.strokeStyle = "#16a085";
+  ctx.beginPath();
+  ctx.arc(px + 24, py + 22, 14, 0, Math.PI);
+  ctx.stroke();
+
+  // Crossed arms (Crook and Flail)
+  ctx.strokeStyle = "#ffd700";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  // Left arm
+  ctx.moveTo(px + 11, py + 41);
+  ctx.quadraticCurveTo(px + 17, py + 47, px + 23, py + 43);
+  // Right arm
+  ctx.moveTo(px + 37, py + 41);
+  ctx.quadraticCurveTo(px + 31, py + 47, px + 25, py + 43);
+  ctx.stroke();
+
+  // Green Crook
+  ctx.strokeStyle = "#27ae60"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(px + 19, py + 43);
+  ctx.lineTo(px + 12, py + 33);
+  ctx.arc(px + 10, py + 31, 3, 0, Math.PI * 1.5, true);
+  ctx.stroke();
+
+  // Orange/Gold Flail
+  ctx.strokeStyle = "#e67e22";
+  ctx.beginPath();
+  ctx.moveTo(px + 27, py + 43);
+  ctx.lineTo(px + 34, py + 33);
+  ctx.moveTo(px + 34, py + 33); ctx.lineTo(px + 36, py + 25);
+  ctx.moveTo(px + 34, py + 33); ctx.lineTo(px + 39, py + 28);
+  ctx.stroke();
+
+  // 6. Hieroglyphic Center Panel
+  ctx.fillStyle = "#ffd700";
+  ctx.fillRect(px + 20, py + 50, 8, 40);
+  ctx.strokeStyle = "#85581a";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(px + 20, py + 50, 8, 40);
+  
+  // Runic hieroglyph details
+  ctx.strokeStyle = "#85581a";
+  ctx.beginPath();
+  ctx.moveTo(px + 22, py + 56); ctx.lineTo(px + 26, py + 56);
+  ctx.moveTo(px + 24, py + 64); ctx.lineTo(px + 24, py + 72);
+  ctx.arc(px + 24, py + 80, 2, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Body feathered wings patterns
+  ctx.strokeStyle = "rgba(30, 72, 112, 0.45)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let yOffset = 50; yOffset < 90; yOffset += 8) {
+    ctx.moveTo(px + 11, py + yOffset);
+    ctx.quadraticCurveTo(px + 15, py + yOffset + 4, px + 20, py + yOffset);
+    ctx.moveTo(px + 37, py + yOffset);
+    ctx.quadraticCurveTo(px + 33, py + yOffset + 4, px + 28, py + yOffset);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawCrystal(px, py, scale) {
   if (crystalReady) {
     ctx.drawImage(crystalImage, px, py, 64*scale, 64*scale);
@@ -4094,7 +5851,7 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
   if (inInterior) {
-    if (currentStage === 10) {
+    if (currentStage === 11) {
       // Starry Night Sky for Seismic Palace
       ctx.fillStyle = "#020412"; // Deep night blue
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -4122,8 +5879,9 @@ function draw() {
   ctx.translate(-camera.x, -camera.y);
 
   // Draw all thematic background pillars first (so they are yekpare and stay in the far background behind all blocks/portals)
-  if (currentStage !== 10 && !inInterior) {
+  if (!inInterior) {
     for (let x = 2; x < mapWidth; x += 6) {
+      if (map[9] && map[9][x] !== 1) continue; // Skip drawing pillars that would fall into gaps/traps!
       const bounds = getColumnVerticalBounds(x);
       const px = x * TILE_SIZE;
       drawThematicPillar(ctx, px + 32, bounds.topY, bounds.bottomY, currentStage, time);
@@ -4210,7 +5968,9 @@ function draw() {
             brickBase = "#1c3d2f"; brickHighlight = "#3a8063"; brickMortar = "#0b1c15";
           } else if (currentStage === 9) { // Port Markets - Warm Terracotta Clay
             brickBase = "#523326"; brickHighlight = "#8f5e4b"; brickMortar = "#241610";
-          } else { // Stage 10 - Seismic (Majestic Palace Black & Gold)
+          } else if (currentStage === 10) { // Sedona - Glazed Lapis Lazuli & Gold Mosaics
+            brickBase = "#0b3c5d"; brickHighlight = "#00ebd4"; brickMortar = "#ffd700";
+          } else { // Stage 11 - Majestic Palace Black & Gold
             brickBase = "#110b1a"; brickHighlight = "#d4af37"; brickMortar = "#3b0764";
           }
 
@@ -4249,52 +6009,141 @@ function draw() {
       else if (tile === 5) { // Background Pillar
         // Already pre-rendered in the unified background pass!
       }
-      else if (tile === 4) { // Treasure Chest
-        // Golden ornate chest base
-        ctx.fillStyle = "#b8860b"; ctx.fillRect(px + 8, py + 32, 48, 32);
-        ctx.fillStyle = "#d4af37"; ctx.fillRect(px + 12, py + 36, 40, 24);
+      else if (tile === 4) { // Treasure Chest (Upgraded to a stunning, luxury pharaonic treasure chest!)
+        ctx.save();
+        
+        // Detailed chest shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(px + 4, py + 56, 56, 8);
         
         if (chestOpened) {
-           // Chest lid open
-           ctx.fillStyle = "#d4af37";
-           ctx.beginPath(); 
-           ctx.moveTo(px+8, py+32); 
-           ctx.lineTo(px+24, py+4); 
-           ctx.lineTo(px+64, py+4); 
-           ctx.lineTo(px+48, py+32); 
+           // 1. Draw volumetric light beam rising from chest!
+           const pulseGlow = (Math.sin(time * 6) + 1) / 2;
+           const beam = ctx.createLinearGradient(px + 32, py + 32, px + 32, py - 40);
+           beam.addColorStop(0, "rgba(255, 120, 180, 0.4)");
+           beam.addColorStop(0.5, `rgba(255, 180, 210, ${0.15 + pulseGlow * 0.1})`);
+           beam.addColorStop(1, "rgba(255, 120, 180, 0)");
+           ctx.fillStyle = beam;
+           ctx.beginPath();
+           ctx.moveTo(px + 12, py + 32);
+           ctx.lineTo(px + 2, py - 40);
+           ctx.lineTo(px + 62, py - 40);
+           ctx.lineTo(px + 52, py + 32);
+           ctx.closePath();
            ctx.fill();
-           ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2; ctx.stroke();
+
+           // 2. Chest Inside (Deep Velvet Maroon)
+           ctx.fillStyle = "#4a0e17"; // Rich maroon velvet
+           ctx.fillRect(px + 8, py + 32, 48, 32);
+           
+           // Golden coins/treasure inside chest
+           ctx.fillStyle = "#ffd700";
+           for (let cX = 12; cX <= 48; cX += 6) {
+             ctx.beginPath();
+             ctx.arc(px + cX + Math.sin(cX) * 2, py + 36 + Math.cos(cX) * 2, 4, 0, Math.PI * 2);
+             ctx.fill();
+           }
+           
+           // 3. Ornate Chest Base (Luxury Gold with Wood Panels)
+           ctx.fillStyle = "#5c3d24"; // Rich mahogany wood corners
+           ctx.fillRect(px + 6, py + 32, 6, 32);
+           ctx.fillRect(px + 52, py + 32, 6, 32);
+           
+           ctx.fillStyle = "#d4af37"; // Rich gold bands
+           ctx.fillRect(px + 12, py + 38, 40, 26);
+           ctx.strokeRect(px + 12, py + 38, 40, 26);
+           
+           // Embedded ruby/emerald details
+           ctx.fillStyle = "#e74c3c"; // Ruby
+           ctx.beginPath(); ctx.arc(px + 20, py + 48, 3, 0, Math.PI * 2); ctx.fill();
+           ctx.fillStyle = "#2ecc71"; // Emerald
+           ctx.beginPath(); ctx.arc(px + 44, py + 48, 3, 0, Math.PI * 2); ctx.fill();
+
+           // 4. Ornate Chest Lid Open (tilted back)
+           ctx.fillStyle = "#5c3d24"; // Dark wood back of lid
+           ctx.beginPath(); 
+           ctx.moveTo(px + 8, py + 32); 
+           ctx.lineTo(px + 18, py + 4); 
+           ctx.lineTo(px + 58, py + 4); 
+           ctx.lineTo(px + 48, py + 32); 
+           ctx.fill();
+           ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 2.5; ctx.stroke();
+           
+           // Red velvet lid interior showing
+           ctx.fillStyle = "#800c1d";
+           ctx.beginPath();
+           ctx.moveTo(px + 14, py + 26);
+           ctx.lineTo(px + 22, py + 8);
+           ctx.lineTo(px + 54, py + 8);
+           ctx.lineTo(px + 42, py + 26);
+           ctx.closePath();
+           ctx.fill();
            
            // Draw Rising Gemstone (Seismic Crystal)!
-            ctx.save();
-            const gy = py + 32 - chestGemY;
-            
-            // 1. Pulsating glowing drop-shadow
-            const pulse = (Math.sin(time * 5) + 1) / 2;
-            ctx.shadowColor = `rgba(255, 120, 180, ${0.6 + pulse * 0.4})`;
-            ctx.shadowBlur = 20;
-            
-            // 2. Beautiful radial outer glow
-            const glow = ctx.createRadialGradient(px + 32, gy + 16, 2, px + 32, gy + 16, 36);
-            glow.addColorStop(0, "rgba(255, 120, 180, 0.85)");
-            glow.addColorStop(0.5, "rgba(255, 120, 180, 0.3)");
-            glow.addColorStop(1, "rgba(255, 120, 180, 0)");
-            ctx.fillStyle = glow;
-            ctx.beginPath();
-            ctx.arc(px + 32, gy + 16, 36, 0, Math.PI * 2);
-            ctx.fill();
+           ctx.save();
+           const gy = py + 32 - chestGemY;
+           
+           // 1. Pulsating glowing drop-shadow
+           const pulse = (Math.sin(time * 5) + 1) / 2;
+           ctx.shadowColor = `rgba(255, 120, 180, ${0.6 + pulse * 0.4})`;
+           ctx.shadowBlur = 20;
+           
+           // 2. Beautiful radial outer glow
+           const glow = ctx.createRadialGradient(px + 32, gy + 16, 2, px + 32, gy + 16, 36);
+           glow.addColorStop(0, "rgba(255, 120, 180, 0.85)");
+           glow.addColorStop(0.5, "rgba(255, 120, 180, 0.3)");
+           glow.addColorStop(1, "rgba(255, 120, 180, 0)");
+           ctx.fillStyle = glow;
+           ctx.beginPath();
+           ctx.arc(px + 32, gy + 16, 36, 0, Math.PI * 2);
+           ctx.fill();
 
-            // 3. Draw Seismic crystal image centered over chest
-            ctx.drawImage(crystalImage, px + 12, gy - 4, 40, 40);
-            ctx.restore();
-         } else {
-           // Chest lid closed
+           // 3. Draw Seismic crystal image centered over chest
+           ctx.drawImage(crystalImage, px + 12, gy - 4, 40, 40);
+           ctx.restore();
+        } else {
+           // --- CHEST CLOSED (Ultra Luxury Chest) ---
+           // 1. Solid Mahogany wood chest base with heavy iron corners
+           ctx.fillStyle = "#3e2723"; // Deep dark mahogany
+           ctx.fillRect(px + 6, py + 32, 52, 32);
+           
+           // Heavy corner reinforcements
+           ctx.fillStyle = "#111111"; // Black iron
+           ctx.fillRect(px + 6, py + 32, 6, 32);
+           ctx.fillRect(px + 52, py + 32, 6, 32);
+           
+           // Ornate golden center shield panel
+           ctx.fillStyle = "#ffd700"; // Shiny gold
+           ctx.fillRect(px + 16, py + 36, 32, 24);
+           ctx.strokeStyle = "#b8860b"; ctx.lineWidth = 1.5;
+           ctx.strokeRect(px + 16, py + 36, 32, 24);
+           
+           // 2. Ornate Chest Lid (Dome style)
+           // Golden banding on arch
            ctx.fillStyle = "#b8860b";
            ctx.beginPath(); ctx.arc(px + 32, py + 32, 24, Math.PI, 0); ctx.fill();
-           ctx.fillStyle = "#d4af37";
+           ctx.fillStyle = "#ffd700"; // Rich gold lid plate
            ctx.beginPath(); ctx.arc(px + 32, py + 32, 20, Math.PI, 0); ctx.fill();
-           ctx.fillStyle = "#8b4513"; ctx.fillRect(px+28, py+24, 8, 12); // lock
+           
+           // Dark wood stripes on the lid
+           ctx.strokeStyle = "#5c3d24";
+           ctx.lineWidth = 3;
+           ctx.beginPath();
+           ctx.arc(px + 32, py + 32, 22, Math.PI + 0.5, Math.PI * 2 - 0.5);
+           ctx.stroke();
+           
+           // Heavy golden handle locks and gem encrustation in center of lid
+           ctx.fillStyle = "#e74c3c"; // Ruby gem
+           ctx.beginPath(); ctx.arc(px + 32, py + 18, 3, 0, Math.PI * 2); ctx.fill();
+           
+           // Ornate lion/runic shield golden lock
+           ctx.fillStyle = "#8b5a2b"; ctx.fillRect(px + 26, py + 26, 12, 12);
+           ctx.fillStyle = "#d4af37"; ctx.fillRect(px + 28, py + 28, 8, 8);
+           ctx.strokeStyle = "#000000"; ctx.lineWidth = 1;
+           ctx.strokeRect(px + 28, py + 28, 8, 8);
+           ctx.fillStyle = "#111111"; ctx.beginPath(); ctx.arc(px + 32, py + 32, 2, 0, Math.PI*2); ctx.fill(); // keyhole
         }
+        ctx.restore();
       }
       else if (tile === 2) {
         if (y > 0 && map[y-1][x] === 2) drawPortal(px, py - TILE_SIZE);
@@ -4878,8 +6727,191 @@ function draw() {
             ctx.strokeRect(px - 14, py + TILE_SIZE * 2 - 4, TILE_SIZE + 28, 6);
             
             ctx.restore();
+          } else if (style === 10) {
+            // Style 10: Sedona Samarkand Timurid Mosque Gate
+            ctx.save();
+            
+            // Dynamic energetic Sedona orange breathing glow
+            const pulse = (Math.sin(time * 2) + 1) / 2;
+            ctx.shadowColor = "#ef5f00";
+            ctx.shadowBlur = 6 + pulse * 6;
+            
+            // Majestic Glazed Turquoise & Gold Pointed Arch Outer Frame (Ogival Islamic Arch!)
+            ctx.fillStyle = "#061a26"; // Deep lapis base
+            ctx.strokeStyle = "#00ebd4"; // Glazed turquoise border
+            ctx.lineWidth = 3.5;
+            
+            ctx.beginPath();
+            // Bottom left
+            ctx.moveTo(px - 12, py + TILE_SIZE * 2);
+            // Straight up to left springpoint
+            ctx.lineTo(px - 12, py + TILE_SIZE - 4);
+            // Elegant ogival curved sweep to pointed apex
+            ctx.quadraticCurveTo(px - 12, py + 8, px + TILE_SIZE/2, py - 12);
+            // Elegant ogival curved sweep from pointed apex down to right springpoint
+            ctx.quadraticCurveTo(px + TILE_SIZE + 12, py + 8, px + TILE_SIZE + 12, py + TILE_SIZE - 4);
+            // Straight down to bottom right
+            ctx.lineTo(px + TILE_SIZE + 12, py + TILE_SIZE * 2);
+            
+            // Cut out inner arch opening:
+            ctx.lineTo(px + TILE_SIZE - 4, py + TILE_SIZE * 2);
+            ctx.lineTo(px + TILE_SIZE - 4, py + TILE_SIZE);
+            // Inner curved sweep to inner pointed apex
+            ctx.quadraticCurveTo(px + TILE_SIZE - 4, py + TILE_SIZE - 20, px + TILE_SIZE/2, py + 10);
+            // Inner curved sweep from inner apex down to left inner springpoint
+            ctx.quadraticCurveTo(px + 4, py + TILE_SIZE - 20, px + 4, py + TILE_SIZE);
+            ctx.lineTo(px + 4, py + TILE_SIZE * 2);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+            
+            // Inner gold frame border accent following the ogival sweep
+            ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(px - 6, py + TILE_SIZE * 2);
+            ctx.lineTo(px - 6, py + TILE_SIZE - 3);
+            ctx.quadraticCurveTo(px - 6, py + 12, px + TILE_SIZE/2, py - 6);
+            ctx.quadraticCurveTo(px + TILE_SIZE + 6, py + 12, px + TILE_SIZE + 6, py + TILE_SIZE - 3);
+            ctx.lineTo(px + TILE_SIZE + 6, py + TILE_SIZE * 2);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0; // Turn off shadow for inner wood/carvings
+            
+            // --- 1. Geometric Stained-Glass Transom (Girih Arch Window) ---
+            ctx.save();
+            // Clip to the inner pointed arch transom area
+            ctx.beginPath();
+            ctx.moveTo(px + 4, py + TILE_SIZE);
+            ctx.quadraticCurveTo(px + 4, py + TILE_SIZE - 20, px + TILE_SIZE/2, py + 10);
+            ctx.quadraticCurveTo(px + TILE_SIZE - 4, py + TILE_SIZE - 20, px + TILE_SIZE - 4, py + TILE_SIZE);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Concentric radial stained-glass slices with different jewel colors!
+            const colors = ["#dc2626", "#d97706", "#2563eb", "#059669", "#7c3aed", "#db2777"];
+            const centerX = px + TILE_SIZE/2;
+            const centerY = py + TILE_SIZE;
+            const radius = TILE_SIZE - 8;
+            
+            // Outer concentric slices
+            for (let i = 0; i < 6; i++) {
+              const startAngle = Math.PI + (i * Math.PI / 6);
+              const endAngle = Math.PI + ((i + 1) * Math.PI / 6);
+              ctx.fillStyle = colors[i % colors.length];
+              ctx.beginPath();
+              ctx.moveTo(centerX, centerY);
+              ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+              ctx.closePath();
+              ctx.fill();
+            }
+            
+            // Inner concentric star/ring slices
+            for (let i = 0; i < 6; i++) {
+              const startAngle = Math.PI + (i * Math.PI / 6) + 0.25;
+              const endAngle = Math.PI + ((i + 1) * Math.PI / 6) + 0.25;
+              ctx.fillStyle = colors[(i + 3) % colors.length];
+              ctx.beginPath();
+              ctx.moveTo(centerX, centerY);
+              ctx.arc(centerX, centerY, radius * 0.6, startAngle, endAngle);
+              ctx.closePath();
+              ctx.fill();
+            }
+            
+            // Central gold rosette core
+            ctx.fillStyle = "#ffd700";
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.25, Math.PI, 2 * Math.PI);
+            ctx.fill();
+            
+            // Structural brass lead lines (grille lines)
+            ctx.strokeStyle = "#451a03"; ctx.lineWidth = 1.8;
+            // Radial lines
+            for (let i = 0; i <= 6; i++) {
+              const angle = Math.PI + (i * Math.PI / 6);
+              ctx.beginPath();
+              ctx.moveTo(centerX, centerY);
+              ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+              ctx.stroke();
+            }
+            // Concentric grids
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.6, Math.PI, 2 * Math.PI);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.25, Math.PI, 2 * Math.PI);
+            ctx.stroke();
+            
+            ctx.restore(); // Exit stained-glass clipping
+            
+            // --- 2. Hand-Carved Samarkand Cedar Wood Double Doors ---
+            ctx.fillStyle = "#a16207"; // Warm golden chestnut cedar wood color from reference!
+            ctx.fillRect(px + 4, py + TILE_SIZE, TILE_SIZE - 8, TILE_SIZE - 4);
+            ctx.strokeStyle = "#451a03"; ctx.lineWidth = 2.5;
+            ctx.strokeRect(px + 4, py + TILE_SIZE, TILE_SIZE - 8, TILE_SIZE - 4);
+            
+            // Center split seam
+            ctx.beginPath();
+            ctx.moveTo(px + TILE_SIZE/2, py + TILE_SIZE);
+            ctx.lineTo(px + TILE_SIZE/2, py + TILE_SIZE * 2 - 4);
+            ctx.stroke();
+            
+            // Symmetrical gold-lined Girih Star Engraving frames on each door panel!
+            ctx.strokeStyle = "#451a03"; ctx.lineWidth = 1.2;
+            
+            // Left Door Panel Star Lattice Frame
+            ctx.strokeRect(px + 8, py + TILE_SIZE + 4, TILE_SIZE/2 - 12, TILE_SIZE - 12);
+            // Left Door Star Lattice lines
+            ctx.beginPath();
+            const lx = px + 8 + (TILE_SIZE/2 - 12)/2;
+            const ly = py + TILE_SIZE + 4 + (TILE_SIZE - 12)/2;
+            for (let i = 0; i < 8; i++) {
+              const angle = i * Math.PI / 4;
+              ctx.moveTo(lx, ly);
+              ctx.lineTo(lx + Math.cos(angle) * 8, ly + Math.sin(angle) * 8);
+            }
+            ctx.stroke();
+            
+            // Right Door Panel Star Lattice Frame
+            ctx.strokeRect(px + TILE_SIZE/2 + 4, py + TILE_SIZE + 4, TILE_SIZE/2 - 12, TILE_SIZE - 12);
+            // Right Door Star Lattice lines
+            ctx.beginPath();
+            const rx = px + TILE_SIZE/2 + 4 + (TILE_SIZE/2 - 12)/2;
+            const ry = py + TILE_SIZE + 4 + (TILE_SIZE - 12)/2;
+            for (let i = 0; i < 8; i++) {
+              const angle = i * Math.PI / 4;
+              ctx.moveTo(rx, ry);
+              ctx.lineTo(rx + Math.cos(angle) * 8, ry + Math.sin(angle) * 8);
+            }
+            ctx.stroke();
+            
+            // Glowing Sedona Orange center seam glow
+            ctx.shadowColor = "#ef5f00"; ctx.shadowBlur = 8;
+            ctx.strokeStyle = "#ef5f00"; ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(px + TILE_SIZE/2, py + TILE_SIZE); ctx.lineTo(px + TILE_SIZE/2, py + TILE_SIZE * 2 - 4);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
+            
+            // Solid Brass Timurid door rings (handles)
+            ctx.fillStyle = "#ffd700"; ctx.strokeStyle = "#78350f"; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(px + TILE_SIZE/2 - 6, py + TILE_SIZE + 24, 3.5, 0, Math.PI*2);
+            ctx.fill(); ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(px + TILE_SIZE/2 + 6, py + TILE_SIZE + 24, 3.5, 0, Math.PI*2);
+            ctx.fill(); ctx.stroke();
+            
+            // Polished Glazed Mosaic Threshold Step (Turquoise tile motif)
+            ctx.fillStyle = "#00ebd4";
+            ctx.fillRect(px - 14, py + TILE_SIZE * 2 - 4, TILE_SIZE + 28, 6);
+            ctx.strokeStyle = "#ef5f00"; ctx.lineWidth = 1.5;
+            ctx.strokeRect(px - 14, py + TILE_SIZE * 2 - 4, TILE_SIZE + 28, 6);
+            
+            ctx.restore();
           } else {
-            // Style 10: Seismic Grand Royal Palace Door
+            // Style 11 (Fallback): Seismic Grand Royal Palace Door
             // Majestic Gold Frame
             ctx.fillStyle = "#ffb700"; ctx.strokeStyle = "#8a6300"; ctx.lineWidth = 3;
             ctx.beginPath();
@@ -5095,6 +7127,16 @@ function draw() {
           ctx.beginPath();
           ctx.moveTo(px + 18, py + 8); ctx.lineTo(px + 28, py + 16); ctx.lineTo(px + 44, py + 24);
           ctx.stroke();
+        } else if (currentStage === 10) { // Sedona - Turquoise Timurid Floral Obelisk
+          // Golden Base
+          ctx.fillStyle = "#b7950b"; ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 2.5;
+          ctx.fillRect(px + 4, botY, 56, 16); ctx.strokeRect(px + 4, botY, 56, 16);
+          
+          // Slab with Polished Dark Charcoal Obsidian Stone
+          ctx.fillStyle = "#16171d";
+          ctx.beginPath(); ctx.moveTo(topLx, topY); ctx.lineTo(topRx, topY);
+          ctx.lineTo(botRx, botY); ctx.lineTo(botLx, botY); ctx.closePath();
+          ctx.fill(); ctx.strokeStyle = "#ef5f00"; ctx.lineWidth = 1.8; ctx.stroke();
         }
         
         ctx.restore();
@@ -5150,6 +7192,8 @@ function draw() {
       ctx.restore();
     } else if (t.type === 'spike') {
       drawSpikes(ctx, t);
+    } else if (t.type === 'fire') {
+      drawFirePit(ctx, t);
     } else if (t.type === 'axe') {
       // Draw pivot bracket centered exactly in the middle of the stone block
       ctx.fillStyle = "#2c3e50";
@@ -5188,15 +7232,64 @@ function draw() {
     }
   }
 
-  if (currentStage === 10) {
+  if (inInterior && currentStage === 11) {
     // Ornate Persian Carpet on the floor (px = 320 to 960)
     drawOrnateCarpet(ctx, 320 - camera.x, 444 - camera.y, 640, 10);
     
-    // Royal Couch/Bed on the left
-    drawRoyalBed(ctx, 80 - camera.x, 396 - camera.y);
+    // Royal Couch/Bed on the left (grounded onto the platform top edge)
+    drawRoyalBed(ctx, 80 - camera.x, 400 - camera.y);
     
-    // Hourglass next to the chest
-    drawHourglass(ctx, 780 - camera.x, 386 - camera.y, time);
+    // Sparkling Gold Treasure Pile
+    drawTreasurePile(ctx, 610 - camera.x, 396 - camera.y, time);
+
+    // Egyptian Sarcophagus 1 aligned perfectly in front of the left column at 512
+    drawEgyptianSarcophagus(ctx, 488 - camera.x, 348 - camera.y, time);
+
+    // Egyptian Sarcophagus 2 (Symmetrical Copy) aligned perfectly in front of the right column at 896
+    drawEgyptianSarcophagus(ctx, 872 - camera.x, 348 - camera.y, time);
+
+    // Hourglass positioned perfectly in front of the thin column immediately to its right (cx = 1088)
+    drawHourglass(ctx, 1056 - camera.x, 386 - camera.y, time);
+    
+    // Soaring Dragon on the far right guarding the core! Patrolling down to the chest and back.
+    if (!dragonDead || dragonDeadTime < 60) {
+      if (dragonDead) dragonDeadTime++;
+      const dragX = 900 + Math.cos(time * 0.8) * 260 - camera.x;
+      const dragY = 320 + Math.sin(time * 2.5) * 15 - camera.y;
+      drawDragon(ctx, dragX, dragY, time);
+
+      // Draw Dragon Boss Health Bar above its head
+      if (!dragonDead) {
+        const barW = 80;
+        const barH = 6;
+        const barX = dragX - barW / 2;
+        const barY = dragY - 70; // Positioned perfectly above dragon center
+
+        // Dark translucent background with sleek border
+        ctx.fillStyle = "rgba(10, 10, 15, 0.65)";
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+        ctx.lineWidth = 1;
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.strokeRect(barX, barY, barW, barH);
+
+        // Filled glowing red-orange segment
+        const hpPercent = Math.max(0, dragonHP / 3);
+        const fillW = barW * hpPercent;
+        if (fillW > 0) {
+          const barGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+          barGrad.addColorStop(0, "#e74c3c"); // Crimson Red
+          barGrad.addColorStop(1, "#f39c12"); // Golden Orange
+          ctx.fillStyle = barGrad;
+          ctx.fillRect(barX, barY, fillW, barH);
+        }
+
+        // Mini boss label
+        ctx.fillStyle = "#f39c12";
+        ctx.font = "bold 9px 'Outfit', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`DRAGON [${dragonHP}/3]`, dragX, barY - 4);
+      }
+    }
   }
 
   // Draw Enemies
@@ -5217,7 +7310,7 @@ function draw() {
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   
-  const hudX = 96;
+  const hudX = 24;
   const hudY = 14;
   const hudW = 190;
   const hudH = 46;
@@ -5279,50 +7372,76 @@ function draw() {
   // 4. Draw a gorgeous glowing 3D crystal diamond gem
   const gemX = hudX + 20;
   const gemY = hudY + hudH / 2;
-  const gemPulse = 1.0 + Math.sin(time * 5.0) * 0.12; // Dynamic slow pulse
   
-  ctx.save();
-  ctx.translate(gemX, gemY);
-  ctx.scale(gemPulse, gemPulse);
-  
-  // Outer pink glow aura
-  ctx.shadowColor = "#ff007f";
-  ctx.shadowBlur = 14;
-  
-  // Left facet (deep pink-purple)
-  ctx.fillStyle = "#8e44ad";
-  ctx.beginPath();
-  ctx.moveTo(0, -9);
-  ctx.lineTo(-7, 0);
-  ctx.lineTo(0, 9);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Right facet (bright radiant neon pink)
-  ctx.fillStyle = "#ff007f";
-  ctx.beginPath();
-  ctx.moveTo(0, -9);
-  ctx.lineTo(7, 0);
-  ctx.lineTo(0, 9);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Horizontal highlight seam
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 1.0;
-  ctx.beginPath();
-  ctx.moveTo(-7, 0);
-  ctx.lineTo(7, 0);
-  ctx.stroke();
-  
-  ctx.restore();
+  if (crystalHudReady) {
+    const gemPulse = 1.0 + Math.sin(time * 4.0) * 0.08; // Dynamic slow pulse
+    ctx.save();
+    ctx.translate(gemX, gemY);
+    ctx.scale(gemPulse, gemPulse);
+    
+    // Outer shimmering pink/rose glow aura
+    ctx.shadowColor = "#ff85a2";
+    ctx.shadowBlur = 14 + Math.sin(time * 6.0) * 6;
+    
+    // Draw the new custom crystal image (centered on gemX, gemY)
+    ctx.drawImage(crystalHudImage, -14, -14, 28, 28);
+    
+    // Add a cinematic diagonal shimmer reflection sweeping across it!
+    ctx.shadowBlur = 0; // Turn off shadow blur for the shimmer pass to keep it crisp
+    ctx.globalCompositeOperation = "source-atop"; // Clip shimmer to crystal shape!
+    
+    const shimmerProgress = (time * 0.45) % 2.0 - 1.0; // Sweeps from -1 to 1
+    const shimmerGrad = ctx.createLinearGradient(-28, -28, 28, 28);
+    shimmerGrad.addColorStop(Math.max(0, Math.min(1, shimmerProgress)), "rgba(255, 255, 255, 0.0)");
+    shimmerGrad.addColorStop(Math.max(0, Math.min(1, shimmerProgress + 0.15)), "rgba(255, 255, 255, 0.7)");
+    shimmerGrad.addColorStop(Math.max(0, Math.min(1, shimmerProgress + 0.3)), "rgba(255, 255, 255, 0.0)");
+    
+    ctx.fillStyle = shimmerGrad;
+    ctx.fillRect(-14, -14, 28, 28);
+    
+    ctx.restore();
+  } else {
+    // Vector fallback if image hasn't loaded yet
+    const gemPulse = 1.0 + Math.sin(time * 5.0) * 0.12;
+    ctx.save();
+    ctx.translate(gemX, gemY);
+    ctx.scale(gemPulse, gemPulse);
+    
+    ctx.shadowColor = "#ff007f";
+    ctx.shadowBlur = 14;
+    
+    ctx.fillStyle = "#8e44ad";
+    ctx.beginPath();
+    ctx.moveTo(0, -9);
+    ctx.lineTo(-7, 0);
+    ctx.lineTo(0, 9);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = "#ff007f";
+    ctx.beginPath();
+    ctx.moveTo(0, -9);
+    ctx.lineTo(7, 0);
+    ctx.lineTo(0, 9);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(7, 0);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
   
   // 5. Draw sleek cyber-fantasy labels inside the card
   // A. Top small label: SEISMIC CORES
-  ctx.fillStyle = "#00ffcc";
+  ctx.fillStyle = "#ff85a2";
   ctx.font = "bold 9px monospace";
-  // Add sub-glow to label
-  ctx.shadowColor = "#00ffcc";
+  // Add sub-glow to label matching the logo's glow color
+  ctx.shadowColor = "#ff85a2";
   ctx.shadowBlur = 4;
   ctx.fillText("SEISMIC CORES", hudX + 48, hudY + 14);
   
@@ -5330,7 +7449,7 @@ function draw() {
   ctx.shadowBlur = 0; // Reset blur
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 15px Georgia";
-  ctx.fillText(`${logosCollected} / 10`, hudX + 48, hudY + 30);
+  ctx.fillText(`${logosCollected} / 11`, hudX + 48, hudY + 30);
   
   ctx.restore();
 
@@ -5338,7 +7457,7 @@ function draw() {
   const tx = Math.floor((player.x + player.w/2) / TILE_SIZE); const ty = Math.floor((player.y + player.h/2) / TILE_SIZE);
   let nearInteractable = false;
   
-  if (currentStage === 10) {
+  if (inInterior && currentStage === 11) {
     let nearChest = false;
     for(let y=ty-2; y<=ty+2; y++) {
       for(let x=tx-2; x<=tx+2; x++) {
@@ -5366,7 +7485,7 @@ function draw() {
   else if (!inInterior && currentStage < 10 && map[ty] && map[ty][tx] === 2) { promptBox.textContent = "Press E to enter the Sanctum."; nearInteractable = true; } 
   else if (inInterior && map[ty] && map[ty][tx] === 7) { promptBox.textContent = "Press E to read the Monument."; nearInteractable = true; } 
   else if (inInterior && map[ty] && map[ty][tx] === 9) { promptBox.textContent = "Press E to proceed to the next stage."; nearInteractable = true; } 
-  else { promptBox.textContent = "Move with A/D. Jump with Space. Explore the relics."; }
+  else { promptBox.textContent = ""; }
 
   if (nearInteractable) {
     ctx.fillStyle = "#fff"; ctx.font = "20px monospace"; ctx.textAlign = "center";
@@ -5375,27 +7494,41 @@ function draw() {
 
   // Draw Premium Game Over Victory Overlay
   if (golemEmpowered) {
+    // Hide the mute button so it is behind the screen overlay elements
+    const muteBtn = document.getElementById("muteBtn");
+    if (muteBtn) {
+      muteBtn.style.display = "none";
+    }
+
     ctx.save();
-    // 1. Semi-transparent backing overlay
-    ctx.fillStyle = "rgba(8, 4, 16, 0.94)";
+    // 1. Semi-transparent backing overlay with radial dark vignette
+    ctx.fillStyle = "rgba(6, 3, 12, 0.96)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 2. Rising glowing pink/blue particles
-    ctx.fillStyle = "rgba(255, 120, 180, 0.6)";
-    for (let i = 0; i < 40; i++) {
-       const px = (i * 73 + time * 20) % canvas.width;
-       const py = (canvas.height - (i * 47 + time * 50) % canvas.height);
-       const r = 2 + (i % 4);
-       ctx.beginPath();
-       ctx.arc(px, py, r, 0, Math.PI*2);
-       ctx.fill();
+    // 2. Beautiful Rotating & Floating Holographic Ecosystem Project Logos (reverse rain / bubble rising effect)
+    const particleCount = 11;
+    for (let i = 0; i < particleCount; i++) {
+      // Scattered horizontal placement with slow wave movement
+      const px = (i * 113) % (canvas.width - 160) + 80 + Math.sin(time * 0.5 + i) * 15;
+      // Vertically rising at varied speeds, wrapping around the canvas gracefully
+      const py = (canvas.height + 60) - ((time * (18 + (i % 3) * 6) + i * 95) % (canvas.height + 120));
+      const angle = time * 0.2 + i;
+      const scale = 0.52 + (i % 4) * 0.12; // Layered scales (0.52 to 0.88)
+      
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(angle);
+      ctx.scale(scale, scale);
+      ctx.translate(-32, -28); // Center of drawBrandLogo (32, 28)
+      drawBrandLogo(ctx, 0, 0, i, time * 0.4 + i);
+      ctx.restore();
     }
 
     // 3. Ornate gold frame
     ctx.strokeStyle = "#d4af37";
     ctx.lineWidth = 4;
     ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
-    ctx.strokeStyle = "rgba(255, 120, 180, 0.3)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
     ctx.lineWidth = 1;
     ctx.strokeRect(36, 36, canvas.width - 72, canvas.height - 72);
 
@@ -5417,19 +7550,42 @@ function draw() {
     drawCorner(40, canvas.height - 40, 1, -1);
     drawCorner(canvas.width - 40, canvas.height - 40, -1, -1);
 
-    // 4. Victory Information
+    // 4. Victory Information (Dual-tone platinum white core with bright neon pink backing glow)
     ctx.textAlign = "center";
-    ctx.shadowColor = "#ff55ff";
-    ctx.shadowBlur = 30;
-    ctx.fillStyle = "#ff55ff";
-    ctx.font = "bold 64px Georgia";
-    ctx.fillText("ARCHIVE COMPLETE", canvas.width / 2, 180);
+    ctx.shadowColor = "rgba(255, 42, 143, 0.85)"; // Seismic neon pink backing glow
+    ctx.shadowBlur = 20 + Math.sin(time * 3) * 5;
+    ctx.fillStyle = "#ffffff"; // Premium crisp white core
+    ctx.font = "bold 60px Georgia";
+    ctx.fillText("ARCHIVE COMPLETE", canvas.width / 2, 175);
     
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = "#d4af37";
-    ctx.font = "bold 24px Georgia";
-    ctx.fillText("SEISMIC CORE AWAKENED", canvas.width / 2, 230);
+    // Crisp white stroke over it to maintain high-end sharpness
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = 1;
+    ctx.strokeText("ARCHIVE COMPLETE", canvas.width / 2, 175);
+    
+    ctx.shadowColor = "rgba(255, 255, 255, 0.4)";
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = "#e0e0e0";
+    ctx.font = "bold 20px Georgia";
+    ctx.fillText("SEISMIC CORE AWAKENED", canvas.width / 2, 222);
     ctx.shadowBlur = 0;
+
+    // Elegant gold border line and ornate center diamond under titles
+    ctx.strokeStyle = "rgba(212, 175, 55, 0.45)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2 - 200, 245);
+    ctx.lineTo(canvas.width / 2 + 200, 245);
+    ctx.stroke();
+
+    ctx.fillStyle = "#d4af37";
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 240);
+    ctx.lineTo(canvas.width / 2 + 6, 245);
+    ctx.lineTo(canvas.width / 2, 250);
+    ctx.lineTo(canvas.width / 2 - 6, 245);
+    ctx.closePath();
+    ctx.fill();
 
     // Story Description
     ctx.fillStyle = "#e0e0e0";
@@ -5437,55 +7593,182 @@ function draw() {
     ctx.fillText("The Seismic Golem has successfully absorbed the ultimate core energy, awakening the ancient archives.", canvas.width / 2, 300);
     ctx.fillText("Brookwell, Blend, Port Markets, and the entire ecosystem are forever secured by the Seismic Shield!", canvas.width / 2, 330);
 
-    // Statistics Box
-    ctx.fillStyle = "rgba(255,255,255,0.05)";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    // Statistics Box (Translucent gold/black border matching the room theme)
+    ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.strokeStyle = "rgba(212, 175, 55, 0.25)";
     ctx.lineWidth = 1.5;
     ctx.fillRect(440, 370, 400, 80);
     ctx.strokeRect(440, 370, 400, 80);
 
-    ctx.fillStyle = "#00ffcc";
+    // Left glowing Seismic Reference Crystal Logo inside the stats box
+    if (crystalReady) {
+      ctx.save();
+      ctx.translate(485, 410);
+      const crystalPulse = 14 + Math.sin(time * 5) * 6;
+      ctx.shadowColor = "rgba(255, 120, 180, 0.95)"; // Beautiful bright rose/pink neon glow
+      ctx.shadowBlur = crystalPulse;
+      ctx.drawImage(crystalImage, -22, -22, 44, 44);
+      ctx.restore();
+    }
+
+    // Right glowing Seismic Reference Crystal Logo inside the stats box
+    if (crystalReady) {
+      ctx.save();
+      ctx.translate(795, 410);
+      const crystalPulse = 14 + Math.sin(time * 5) * 6;
+      ctx.shadowColor = "rgba(255, 120, 180, 0.95)"; // Beautiful bright rose/pink neon glow
+      ctx.shadowBlur = crystalPulse;
+      ctx.drawImage(crystalImage, -22, -22, 44, 44);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = "#ffffff";
     ctx.font = "bold 13px monospace";
     ctx.fillText("SEISMIC CORES RECOVERED", 640, 395);
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 20px Georgia";
-    ctx.fillText(`${logosCollected} / 10 CORES`, 640, 428);
+    ctx.fillText(`${logosCollected} / 11 CORES`, 640, 428);
 
-    // 5. Restart Button
-    ctx.fillStyle = "#800000"; 
-    ctx.strokeStyle = "#d4af37";
+    // 5. Restart Button (Translucent dark charcoal with a premium glowing white/platinum outline)
+    ctx.save();
+    const isRestartHovered = (hoveredButton === "restart");
+    ctx.fillStyle = isRestartHovered ? "rgba(255, 255, 255, 0.12)" : "rgba(13, 11, 16, 0.85)";
+    ctx.strokeStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
     ctx.lineWidth = 2.5;
-    ctx.fillRect(540, 500, 200, 48);
-    ctx.strokeRect(540, 500, 200, 48);
-
+    ctx.shadowColor = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.25)";
+    ctx.shadowBlur = isRestartHovered ? 15 : 6;
+    
+    // Draw button box
+    ctx.fillRect(380, 500, 230, 52);
+    ctx.strokeRect(380, 500, 230, 52);
+    
+    // Reset shadow blur for drawing inner elements
+    ctx.shadowBlur = 0;
+    
+    // Draw a sleek circular reset/arrow loop icon on the left of the button!
+    ctx.strokeStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(414, 526, 7, -Math.PI * 0.5, Math.PI * 1.2);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(414, 515);
+    ctx.lineTo(414, 521);
+    ctx.lineTo(420, 519);
+    ctx.closePath();
+    ctx.fillStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.8)";
+    ctx.fill();
+    
+    // Draw button text
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 15px monospace";
-    ctx.fillText("RESTART ARCHIVE", 640, 529);
+    ctx.font = "bold 13px monospace";
+    ctx.fillText("RESTART ARCHIVE", 508, 532);
+    ctx.restore();
+
+    // 6. Twitter / X Share Button (Chic neon cyan/teal glassmorphism)
+    ctx.save();
+    const isTwitterHovered = (hoveredButton === "twitter");
+    ctx.fillStyle = isTwitterHovered ? "rgba(0, 255, 204, 0.12)" : "rgba(10, 10, 12, 0.85)";
+    ctx.strokeStyle = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.65)";
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.25)";
+    ctx.shadowBlur = isTwitterHovered ? 15 : 6;
+    
+    // Draw button box
+    ctx.fillRect(670, 500, 230, 52);
+    ctx.strokeRect(670, 500, 230, 52);
+    
+    ctx.shadowBlur = 0;
+    
+    // Draw official glowing X logo (hollow thick diagonal + crossing solid line)
+    ctx.strokeStyle = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.9)";
+    ctx.lineWidth = 1.6;
+    
+    // 1. Hollow thick diagonal bar (top-left to bottom-right)
+    ctx.beginPath();
+    ctx.moveTo(696, 517);
+    ctx.lineTo(700, 517);
+    ctx.lineTo(712, 533);
+    ctx.lineTo(708, 533);
+    ctx.closePath();
+    ctx.stroke();
+    
+    // 2. Crossing solid diagonal line (top-right to bottom-left)
+    ctx.beginPath();
+    ctx.moveTo(712, 517);
+    ctx.lineTo(696, 533);
+    ctx.stroke();
+    
+    // Draw button text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 13px monospace";
+    ctx.fillText("SHARE ON TWITTER", 808, 532);
+    ctx.restore();
 
     ctx.restore();
+  } else {
+    // Make sure the mute button is visible during normal gameplay
+    const muteBtn = document.getElementById("muteBtn");
+    if (muteBtn) {
+      muteBtn.style.display = "flex";
+    }
   }
 }
 
 function loop() {
-  time += 0.016;
-  if (chestOpened && chestGemY < 60) {
-    chestGemY += 1;
+  try {
+    time += 0.016;
+    if (gameStarted) {
+      if (chestOpened && chestGemY < 60) {
+        chestGemY += 1;
+      }
+      updatePhysics();
+    }
+    draw();
+    drawLogoDesk(); // Keep preview logos animated live!
+  } catch (err) {
+    console.error("Game loop error caught safely:", err);
   }
-  updatePhysics();
-  draw();
-  drawLogoDesk(); // Keep preview logos animated live!
   requestAnimationFrame(loop);
 }
 
 // Canvas Click Event Listener for Reset/Restart Button
+let hoveredButton = null;
+canvas.addEventListener("mousemove", (e) => {
+  if (!gameStarted || !golemEmpowered) {
+    hoveredButton = null;
+    canvas.style.cursor = "default";
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
+  const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
+  
+  if (mx >= 380 && mx <= 610 && my >= 500 && my <= 552) {
+    hoveredButton = "restart";
+    canvas.style.cursor = "pointer";
+  } else if (mx >= 670 && mx <= 900 && my >= 500 && my <= 552) {
+    hoveredButton = "twitter";
+    canvas.style.cursor = "pointer";
+  } else {
+    hoveredButton = null;
+    canvas.style.cursor = "default";
+  }
+});
+
 canvas.addEventListener("click", (e) => {
+  if (typeof wakeUpAudio === "function") wakeUpAudio();
+  window.focus();
+  canvas.focus();
+  if (!gameStarted) return;
   if (golemEmpowered) {
     const rect = canvas.getBoundingClientRect();
     const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
     
-    // Check if clicked the Restart Button (x = 540 to 740, y = 500 to 548)
-    if (clickX >= 540 && clickX <= 740 && clickY >= 500 && clickY <= 548) {
+    // Check if clicked the Restart Button (x = 380 to 610, y = 500 to 552)
+    if (clickX >= 380 && clickX <= 610 && clickY >= 500 && clickY <= 552) {
       currentStage = 0;
       inInterior = false;
       chestOpened = false;
@@ -5496,8 +7779,246 @@ canvas.addEventListener("click", (e) => {
       ROOMS.forEach(r => r.logoCollected = false);
       initStage();
     }
+    
+    // Check if clicked the Twitter Button (x = 670 to 900, y = 500 to 552)
+    if (clickX >= 670 && clickX <= 900 && clickY >= 500 && clickY <= 552) {
+      const tweetText = `I have successfully awakened the @SeismicSys Ecosystem Projects and recovered all 11 ancient cores! \n\nThe Seismic Shield is active, securing the Brookwell, Blend, Port Markets and more archives.\n\nBegin your Seismic journey now.: golem-of-seismicc.vercel.app \n\nBuilt by @slatro_eth`;
+      const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+      window.open(twitterShareUrl, "_blank");
+    }
   }
 });
+
+function initPlayBtn() {
+  const playBtn = document.getElementById("playBtn");
+  const playOverlay = document.getElementById("playOverlay");
+  if (playBtn && playOverlay) {
+    playBtn.addEventListener("click", () => {
+      playOverlay.classList.add("hidden");
+      gameStarted = true;
+      
+      // Warm up and start the dynamic audio engine!
+      if (!audioEngine) {
+        audioEngine = new AncientSoundEngine();
+      }
+      audioEngine.init();
+      
+      // Initialize dynamic stages chapters list in sidebar
+      if (typeof initStagesPanel === "function") {
+        initStagesPanel();
+      }
+
+      // Ensure canvas is focused cleanly!
+      setTimeout(() => {
+        window.focus();
+        canvas.focus();
+      }, 50);
+    });
+  }
+  
+  // Wire up the HUD mute button click trigger
+  const muteBtn = document.getElementById("muteBtn");
+  if (muteBtn) {
+    muteBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent canvas click interference
+      if (typeof toggleMuteState === "function") {
+        toggleMuteState();
+      }
+    });
+  }
+
+  // Wire up the vertical menu buttons and modal overlays!
+  if (typeof initMenuButtons === "function") {
+    initMenuButtons();
+  }
+}
+
+function initMenuButtons() {
+  const playBtn = document.getElementById("menuPlayBtn");
+  const replayBtn = document.getElementById("menuReplayBtn");
+  const infoBtn = document.getElementById("menuInfoBtn");
+  const stagesBtn = document.getElementById("menuStagesBtn");
+  const optionsBtn = document.getElementById("menuOptionsBtn");
+  const quitBtn = document.getElementById("menuQuitBtn");
+
+  const menuStack = document.getElementById("panelMenuStack");
+  const infoBlock = document.getElementById("panelInfoBlock");
+  const stagesBlock = document.getElementById("panelStagesBlock");
+  const optionsBlock = document.getElementById("panelOptionsBlock");
+
+  const infoBackBtn = document.getElementById("panelInfoBackBtn");
+  const stagesBackBtn = document.getElementById("panelStagesBackBtn");
+  const optionsBackBtn = document.getElementById("panelOptionsBackBtn");
+
+  // Helper to show main menu stack in sidebar
+  const showMainMenu = () => {
+    if (menuStack) menuStack.classList.remove("hidden");
+    if (infoBlock) infoBlock.classList.add("hidden");
+    if (stagesBlock) stagesBlock.classList.add("hidden");
+    if (optionsBlock) optionsBlock.classList.add("hidden");
+  };
+
+  if (playBtn) {
+    playBtn.addEventListener("click", () => {
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      playBtn.blur();
+      showMainMenu();
+      
+      if (!gameStarted) {
+        const gamePlayBtn = document.getElementById("playBtn");
+        if (gamePlayBtn) {
+          gamePlayBtn.click();
+        }
+      }
+      
+      // Ensure canvas is focused cleanly!
+      setTimeout(() => {
+        window.focus();
+        canvas.focus();
+      }, 50);
+    });
+  }
+
+  if (replayBtn) {
+    replayBtn.addEventListener("click", () => {
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      replayBtn.blur();
+      showMainMenu();
+      
+      if (!gameStarted) return;
+      
+      // Reset variables for restarting stage
+      chestOpened = false;
+      chestGemY = 0;
+      initStage();
+      
+      // Focus canvas immediately so key controls work!
+      setTimeout(() => {
+        window.focus();
+        canvas.focus();
+      }, 50);
+    });
+  }
+
+  if (infoBtn) {
+    infoBtn.addEventListener("click", () => {
+      infoBtn.blur();
+      if (menuStack) menuStack.classList.add("hidden");
+      if (infoBlock) infoBlock.classList.remove("hidden");
+      if (stagesBlock) stagesBlock.classList.add("hidden");
+      if (optionsBlock) optionsBlock.classList.add("hidden");
+    });
+  }
+
+  if (stagesBtn) {
+    stagesBtn.addEventListener("click", () => {
+      stagesBtn.blur();
+      if (menuStack) menuStack.classList.add("hidden");
+      if (infoBlock) infoBlock.classList.add("hidden");
+      if (stagesBlock) stagesBlock.classList.remove("hidden");
+      if (optionsBlock) optionsBlock.classList.add("hidden");
+      
+      // Dynamically load the stages list!
+      if (typeof initStagesPanel === "function") {
+        initStagesPanel();
+      }
+    });
+  }
+
+  if (optionsBtn) {
+    optionsBtn.addEventListener("click", () => {
+      optionsBtn.blur();
+      if (menuStack) menuStack.classList.add("hidden");
+      if (infoBlock) infoBlock.classList.add("hidden");
+      if (stagesBlock) stagesBlock.classList.add("hidden");
+      if (optionsBlock) optionsBlock.classList.remove("hidden");
+    });
+  }
+
+  if (quitBtn) {
+    quitBtn.addEventListener("click", () => {
+      quitBtn.blur();
+      showMainMenu();
+      
+      // Reset gameStarted to false to drop back to cinematic intro overlay!
+      gameStarted = false;
+      
+      // Show playOverlay overlay
+      const playOverlay = document.getElementById("playOverlay");
+      if (playOverlay) {
+        playOverlay.classList.remove("hidden");
+      }
+      
+      // Stop audio engine
+      if (audioEngine) {
+        audioEngine.stop();
+      }
+      
+      // Redraw sound waves if active
+      const muteIcon = document.getElementById("muteIcon");
+      if (muteIcon) {
+        muteIcon.innerHTML = `<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>`;
+      }
+    });
+  }
+
+  if (infoBackBtn) {
+    infoBackBtn.addEventListener("click", () => {
+      infoBackBtn.blur();
+      showMainMenu();
+      canvas.focus();
+    });
+  }
+
+  if (stagesBackBtn) {
+    stagesBackBtn.addEventListener("click", () => {
+      stagesBackBtn.blur();
+      showMainMenu();
+      canvas.focus();
+    });
+  }
+
+  if (optionsBackBtn) {
+    optionsBackBtn.addEventListener("click", () => {
+      optionsBackBtn.blur();
+      showMainMenu();
+      canvas.focus();
+    });
+  }
+
+  // Options View Controls
+  const volSlider = document.getElementById("volSlider");
+  const volVal = document.getElementById("volVal");
+  const particleDensitySelect = document.getElementById("particleDensitySelect");
+  const screenshakeToggle = document.getElementById("screenshakeToggle");
+
+  if (volSlider && volVal) {
+    volSlider.addEventListener("input", (e) => {
+      const val = e.target.value;
+      volVal.textContent = val + "%";
+      if (audioEngine && typeof audioEngine.setVolume === "function") {
+        audioEngine.setVolume(val / 100);
+      }
+    });
+  }
+
+  if (particleDensitySelect) {
+    particleDensitySelect.addEventListener("change", (e) => {
+      particleDensity = e.target.value;
+    });
+  }
+
+  if (screenshakeToggle) {
+    screenshakeToggle.addEventListener("change", (e) => {
+      screenshakeEnabled = e.target.checked;
+    });
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPlayBtn);
+} else {
+  initPlayBtn();
+}
 
 initStage();
 requestAnimationFrame(loop);

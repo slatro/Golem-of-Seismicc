@@ -1,6 +1,6 @@
 # Project Index
 
-This file maps the major documents in the `Golem of Seismic` repository.
+This file maps the major documents in the `Golem of the Seismic` repository.
 
 ## Core
 

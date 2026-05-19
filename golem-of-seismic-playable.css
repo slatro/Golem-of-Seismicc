@@ -91,7 +91,7 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 18px;
-  align-items: start;
+  align-items: start; /* Locks game container strictly to canvas size, floating panel perfectly next to it */
 }
 
 #game,
@@ -165,13 +165,32 @@ kbd {
 }
 
 .prompt {
-  margin-top: 18px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(240, 170, 201, 0.08);
-  border: 1px solid rgba(240, 170, 201, 0.18);
-  color: var(--accent-2);
-  line-height: 1.5;
+  position: absolute !important;
+  bottom: 52px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  padding: 10px 22px !important;
+  border-radius: 12px !important;
+  background: rgba(14, 10, 16, 0.88) !important; /* Premium dark runic glass plate */
+  border: 1.5px solid #ecd685 !important; /* Gold border outline */
+  outline: 1px solid rgba(236, 214, 133, 0.25) !important;
+  outline-offset: -3.5px !important;
+  color: #ecd685 !important; /* Golden gothic color text */
+  font-family: Georgia, serif !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  letter-spacing: 0.04em !important;
+  text-align: center !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.85), 0 8px 24px rgba(0,0,0,0.7) !important;
+  z-index: 50 !important; /* Hovering over the game, but below screen overlays */
+  pointer-events: none !important; /* Click-through */
+  transition: all 0.3s ease !important;
+  white-space: nowrap !important;
+}
+
+.prompt:empty {
+  display: none !important;
 }
 
 .papyrus-overlay {
@@ -352,7 +371,7 @@ kbd {
   margin-top: 6px;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 900px) {
   .play-area {
     grid-template-columns: 1fr;
   }
@@ -406,6 +425,20 @@ kbd {
   justify-content: space-between;
   align-items: center;
   opacity: 0.9;
+}
+.header-seismic-logo {
+  animation: logoShimmer 2.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 2px rgba(255, 42, 143, 0.45));
+}
+@keyframes logoShimmer {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(255, 42, 143, 0.45)) brightness(1);
+    transform: scale(1);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(255, 42, 143, 0.95)) brightness(1.15);
+    transform: scale(1.05);
+  }
 }
 
 .logo-desk-hint {
@@ -495,7 +528,7 @@ kbd {
 
 .logo-desk-name {
   font-family: Georgia, serif;
-  font-size: 10.5px !important; /* Perfect sleek size to fit all names fully */
+  font-size: 9.8px !important; /* Extremely sleek size to guarantee all names fit perfectly without overflow clipping */
   font-weight: bold;
   color: var(--text);
   white-space: nowrap;
@@ -871,4 +904,665 @@ kbd {
 .papyrus-sheet.theme-cosmic .papyrus-close:hover {
   color: #ffd700 !important;
 }
+
+/* 10. Sedona Samarkand Turquoise & Gold Mosaic Theme (Sedona) - Timurid Palace Plaque */
+.papyrus-sheet.theme-sedona {
+  background-color: rgba(6, 26, 38, 0.98) !important; /* Deep Lapis Blue backdrop */
+  background-image: none !important;
+  border-radius: 14px !important;
+  clip-path: none !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(0, 235, 212, 0.12) !important;
+  color: #e2f2f5 !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-eyebrow {
+  color: #ef5f00 !important; /* Sedona Brand Orange */
+  text-shadow: 0 0 10px rgba(239, 95, 0, 0.5) !important;
+}
+.papyrus-sheet.theme-sedona h2 {
+  color: #00ebd4 !important; /* Timurid Glazed Turquoise */
+  border-bottom: 2.5px solid #ef5f00 !important;
+  text-shadow: 0 0 12px rgba(0, 235, 212, 0.6) !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-intro {
+  color: #e2f2f5 !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-block h3 {
+  color: #00ebd4 !important;
+  border-bottom: 1px solid rgba(0, 235, 212, 0.25) !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-block p {
+  color: #c9e6ec !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-block p::first-letter {
+  color: #ef5f00 !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-close {
+  color: rgba(0, 235, 212, 0.5) !important;
+}
+.papyrus-sheet.theme-sedona .papyrus-close:hover {
+  color: #00ebd4 !important;
+  text-shadow: 0 0 8px rgba(0, 235, 212, 0.8) !important;
+}
+
+
+/* Play Overlay Styles */
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 7, 10, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 40px;
+}
+.play-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.how-to-play-card {
+  background: rgba(35, 28, 37, 0.45);
+  border: 1px solid rgba(255, 228, 240, 0.08);
+  border-radius: 24px;
+  padding: 35px 40px;
+  text-align: center;
+  max-width: 620px;
+  width: 90%;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(240, 170, 201, 0.03);
+  margin-bottom: 35px;
+  transform: translateY(0);
+  animation: floatCard 5s ease-in-out infinite;
+}
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.card-eyebrow {
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(240, 170, 201, 0.4);
+}
+.card-title {
+  font-size: 32px;
+  color: var(--text);
+  margin: 0 0 28px 0;
+  font-family: Georgia, serif;
+  letter-spacing: 0.06em;
+}
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 22px;
+  margin-top: 15px;
+}
+.control-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.key-cap-wrapper {
+  display: flex;
+  gap: 6px;
+}
+.key-cap {
+  display: inline-block;
+  min-width: 44px;
+  height: 44px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 12px;
+  color: var(--accent-2);
+  background: linear-gradient(135deg, rgba(50, 40, 52, 0.85), rgba(28, 22, 30, 0.95));
+  border: 1px solid rgba(255, 228, 240, 0.15);
+  font-size: 16px;
+  font-weight: bold;
+  font-family: monospace;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.08);
+}
+.key-cap.wide {
+  min-width: 105px;
+}
+.control-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.play-btn {
+  position: relative;
+  background: linear-gradient(135deg, var(--accent) 0%, #d48ba9 100%);
+  border: none;
+  border-radius: 40px;
+  padding: 18px 60px;
+  font-size: 18px;
+  font-family: Georgia, serif;
+  font-weight: bold;
+  letter-spacing: 0.18em;
+  color: #1e0b14;
+  cursor: pointer;
+  box-shadow: 0 15px 40px rgba(240, 170, 201, 0.35), 0 0 0 1px rgba(255, 228, 240, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
+}
+.play-btn-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+.play-btn:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 22px 50px rgba(240, 170, 201, 0.5), 0 0 25px rgba(240, 170, 201, 0.25);
+}
+.play-btn:hover .play-btn-glow {
+  transform: translateX(100%);
+  transition: transform 0.8s ease;
+}
+.play-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* Tactical HUD Mute Button */
+.mute-btn {
+  position: absolute;
+  top: 1.2%; /* Raised to align and center with the Seismic Cores HUD box */
+  left: 18.2%; /* Scales perfectly with the canvas 1280px width, locking it right of the Cores HUD! */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff1ba 0%, #d8aa3d 45%, #876214 85%, #3d2503 100%);
+  border: 2px solid #ecd685;
+  color: #3d251e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255,255,255,0.7);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 999;
+}
+.mute-btn:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #ebd485 45%, #b08d33 85%, #593b03 100%);
+  box-shadow: 0 6px 15px rgba(236, 214, 133, 0.4), inset 0 1px 3px rgba(255,255,255,0.9);
+}
+.mute-btn:active {
+  transform: scale(0.95);
+}
+.mute-icon {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 1px rgba(255,255,255,0.4));
+}
+
+/* Breathtaking Medieval Gold-Wood Sidebar Layout (Overhauled!) */
+/* Breathtaking Medieval Gold-Wood Sidebar Layout (Overhauled!) */
+.panel {
+  background: 
+    repeating-linear-gradient(rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 12px),
+    linear-gradient(to right, rgba(0,0,0,0.15), transparent, rgba(0,0,0,0.15)),
+    #3c231a !important; /* Authentic high-end deep chestnut wood color */
+  border: 8px solid #c99c3b !important; /* Thick polished solid gold/brass frame */
+  outline: 3px solid #ecd685 !important; /* Shiny gold inner double border inlay */
+  outline-offset: -5px !important;
+  border-radius: 24px !important; /* Perfect round corners */
+  padding: 30px 24px 24px 24px !important; /* Shrunk padding to make arched banner and scroll space beautiful */
+  box-shadow: 
+    inset 0 0 25px rgba(0, 0, 0, 0.95), 
+    0 20px 60px rgba(0, 0, 0, 0.75) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  height: 100% !important;
+  min-height: auto !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important; /* Locks height to outer boundary and prevents text spilling */
+}
+
+/* Beautiful Arched Gold Header Banner Plaque (Direct Reference Match) */
+.panel-header-banner {
+  align-self: center;
+  background: linear-gradient(to bottom, #fff1ba 0%, #d8aa3d 40%, #a27521 100%);
+  border: 3px solid #ecd685;
+  border-bottom: 5px solid #432e08;
+  border-radius: 0 0 16px 16px;
+  color: #2b1712;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 30px;
+  margin-top: -38px; /* Extrude beautifully up over the thick gold frame boundary */
+  margin-bottom: 12px;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.7);
+  text-align: center;
+  z-index: 10;
+  display: inline-block;
+  min-width: 180px;
+  position: relative;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.panel-header-banner::before,
+.panel-header-banner::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #d8aa3d 60%, #3d2503 100%);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.8);
+  transform: translateY(-50%);
+}
+.panel-header-banner::before {
+  left: 10px;
+}
+.panel-header-banner::after {
+  right: 10px;
+}
+
+/* Golden Rivets styled procedurally with 3D metallic sphere shines */
+.rivet {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fff1ba 20%, #d8aa3d 60%, #7c580b 90%, #3d2503 100%);
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.8);
+  z-index: 10;
+}
+.rivet.tl { top: 9px; left: 9px; }
+.rivet.tr { top: 9px; right: 9px; }
+.rivet.bl { bottom: 9px; left: 9px; }
+.rivet.br { bottom: 9px; right: 9px; }
+
+.panel-tabs {
+  display: flex;
+  border-bottom: 2px solid rgba(236, 214, 133, 0.2);
+  padding-bottom: 14px;
+  gap: 12px;
+  z-index: 2;
+}
+
+/* Beautiful Rounded Glossy 3D Golden Buttons */
+.tab-btn {
+  flex: 1;
+  background: linear-gradient(to bottom, #d2a43a 0%, #a27521 50%, #7b5410 100%);
+  border: 2.5px solid #ecd685;
+  border-bottom: 5px solid #432e08;
+  color: #2b1712 !important;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 10px 14px;
+  border-radius: 20px; /* Breathtaking round buttons */
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.55), inset 0 1px 2px rgba(255,255,255,0.65);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn:hover {
+  background: linear-gradient(to bottom, #ecbe4e 0%, #b88d2d 50%, #91681a 100%);
+  border-color: #fff1ba;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.65), inset 0 1px 3px rgba(255,255,255,0.85);
+}
+.tab-btn.active {
+  background: linear-gradient(to bottom, #fff1ba 0%, #d8aa3d 40%, #a27521 100%) !important;
+  border-color: #ffffff !important;
+  border-bottom: 2.5px solid #432e08 !important;
+  transform: translateY(3px) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.4) !important;
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow-y: auto; /* Allow content to scroll vertically if needed */
+  padding-right: 4px;
+  z-index: 2;
+}
+.tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+.tab-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tab-content::-webkit-scrollbar-thumb {
+  background: rgba(236, 214, 133, 0.25);
+  border-radius: 3px;
+}
+.tab-content.hidden {
+  display: none !important;
+}
+
+.mini-key {
+  display: inline-block;
+  min-width: 22px;
+  height: 22px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #4e352b 0%, #2f1d16 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff1ba;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.mini-key.wide {
+  min-width: 45px;
+}
+.controls-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.controls-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: Georgia, serif;
+  font-size: 13.5px;
+  color: #f7ebde;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+.lbl {
+  opacity: 0.9;
+}
+.focus-title {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  color: #fff1ba; /* Glowing gold subtitle heading */
+  margin: 6px 0 0 0;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(216,170,61,0.3);
+}
+.focus-subtitle {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  color: #e3d2c1;
+  margin: 6px 0 0 0;
+  line-height: 1.5;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+.inscription-body {
+  font-family: Georgia, serif;
+  font-size: 14.5px;
+  color: #fcecdb;
+  line-height: 1.6;
+  margin: 6px 0 0 0;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+.panel-footer {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(236, 214, 133, 0.15);
+  border-radius: 14px;
+  padding: 14px;
+  font-family: Georgia, serif;
+  font-size: 12px;
+  color: #d1bda9;
+  text-align: center;
+  margin-top: auto;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.9);
+}
+
+/* Vault Chapters Teleport List */
+.stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-top: 10px;
+}
+.stages-list::-webkit-scrollbar {
+  width: 6px;
+}
+.stages-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.stages-list::-webkit-scrollbar-thumb {
+  background: rgba(236, 214, 133, 0.25);
+  border-radius: 3px;
+}
+
+.stages-list-single {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Textured dark-wood list button chapters! */
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: linear-gradient(to bottom, #503126 0%, #2f1d16 100%);
+  border: 2px solid #7c5443;
+  border-bottom: 4px solid #1c0f0a;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+.stage-item:hover {
+  background: linear-gradient(to bottom, #6a4437 0%, #3e261d 100%);
+  border-color: #9c6c59;
+  transform: translateX(4px) translateY(-1px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+}
+.stage-item.active {
+  background: linear-gradient(to bottom, #fff1ba 0%, #d8aa3d 40%, #a27521 100%) !important;
+  border-color: #ffffff !important;
+  border-bottom: 4px solid #54390b !important;
+  box-shadow: 0 0 20px rgba(216, 170, 61, 0.35), 0 4px 8px rgba(0,0,0,0.4) !important;
+}
+.stage-item.active .stage-title {
+  color: #2b1712 !important;
+  text-shadow: none !important;
+}
+.stage-item.active .stage-subtitle {
+  color: rgba(43, 23, 18, 0.7) !important;
+  text-shadow: none !important;
+}
+
+.stage-mini-logo {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.8);
+}
+.stage-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stage-title {
+  font-family: Georgia, serif;
+  font-size: 13.5px;
+  color: #fff1ba;
+  font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+.stage-subtitle {
+  font-family: system-ui, sans-serif;
+  font-size: 9px;
+  color: #c9bdae;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+}
+
+/* Stack of 4 beautiful vertical gold buttons */
+.menu-buttons-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 22px !important; /* Increased from 14px to 22px to beautifully fill vertical space */
+  width: 100% !important;
+  margin-top: 2px !important; /* Lifted up to center the buttons stack perfectly! */
+  margin-bottom: 20px !important;
+}
+
+/* Gorgeous 3D Golden Menu Button Style (Ornate Gothic Medieval Plaque Design!) */
+.menu-btn-gold {
+  background: linear-gradient(135deg, rgba(26, 12, 6, 0.85) 0%, rgba(54, 30, 16, 0.9) 100%) !important; /* Premium semi-translucent dark walnut wood plate */
+  border: 2px solid #c99c3b !important; /* Elegant gold boundary frame */
+  border-bottom: 5px solid #7b5410 !important; /* 3D Golden base */
+  color: #ecd685 !important; /* Glowing gold letters */
+  font-family: Georgia, serif !important; /* Premium classic serif */
+  font-size: 13.5px !important; /* Elegant refined scaling */
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.22em !important; /* Wide noble spacing */
+  padding: 16px 20px !important; /* Tall, premium padding to feel heavy and luxurious */
+  border-radius: 8px !important; /* Slightly rounded plaque corners */
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important; /* Crisp engraved shadows */
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.65), 
+    inset 0 0 15px rgba(201, 156, 59, 0.15) !important; /* Subtle inner gold mist */
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Decorative side wings for a high-end fantasy touch */
+.menu-btn-gold::before {
+  content: "✦" !important;
+  margin-right: 12px !important;
+  color: #c99c3b !important;
+  font-size: 10px !important;
+  transition: all 0.25s ease !important;
+  opacity: 0.7 !important;
+}
+.menu-btn-gold::after {
+  content: "✦" !important;
+  margin-left: 12px !important;
+  color: #c99c3b !important;
+  font-size: 10px !important;
+  transition: all 0.25s ease !important;
+  opacity: 0.7 !important;
+}
+
+.menu-btn-gold:hover {
+  background: linear-gradient(135deg, rgba(54, 30, 16, 0.95) 0%, rgba(94, 53, 27, 0.98) 100%) !important; /* Refined walnut sheen */
+  border-color: #ffd700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6) !important;
+  transform: translateY(-3px) scale(1.015) !important;
+  box-shadow: 
+    0 15px 30px rgba(0, 0, 0, 0.85), 
+    inset 0 0 20px rgba(255, 215, 0, 0.3),
+    0 0 15px rgba(201, 156, 59, 0.35) !important; /* Majestic gold outer neon aura */
+}
+
+.menu-btn-gold:hover::before,
+.menu-btn-gold:hover::after {
+  color: #ffd700 !important;
+  text-shadow: 0 0 6px #ffd700 !important;
+  transform: scale(1.3) rotate(90deg) !important;
+  opacity: 1 !important;
+}
+
+.menu-btn-gold:active {
+  background: linear-gradient(135deg, rgba(26, 12, 6, 0.98) 0%, rgba(38, 20, 10, 0.98) 100%) !important;
+  border-color: #c99c3b !important;
+  border-bottom-width: 2px !important;
+  transform: translateY(2px) scale(0.985) !important;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.5), 
+    inset 0 0 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+
+/* Stateful Sidebar View Panels */
+.panel-state-view {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.panel-state-view.hidden {
+  display: none !important;
+}
+
+/* Scrollable Container inside Right Sidebar */
+.panel-scroll-area {
+  max-height: 290px !important;
+  overflow-y: auto !important;
+  margin-top: 12px !important;
+  padding-right: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+.panel-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.panel-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.panel-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(236, 214, 133, 0.25);
+  border-radius: 3px;
+}
+
+/* Beautiful custom mini golden back buttons */
+.menu-btn-gold.back-btn {
+  padding: 10px 16px !important;
+  font-size: 13px !important;
+  border-radius: 14px !important;
+  border-bottom-width: 3.5px !important;
+  margin-top: 14px !important;
+}
+.panel-header-banner.sub-banner {
+  position: relative !important;
+  margin: 5px auto 10px auto !important;
+  width: fit-content !important;
+  transform: none !important;
+  left: auto !important;
+  top: auto !important;
+  font-size: 13px !important;
+  padding: 6px 14px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.4) !important;
+}
+
 

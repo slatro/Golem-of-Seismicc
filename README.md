@@ -1,11 +1,11 @@
-# Golem of Seismic
+# Golem of the Seismic
 
-`Golem of Seismic` is a short premium 3D exploration game concept set inside a monumental stone sanctum.  
+`Golem of the Seismic` is a short premium 3D exploration game concept set inside a monumental stone sanctum.  
 The player controls a silent stone guardian who awakens a network of chambers, inscriptions, and sacred rails tied to the Seismic ecosystem.
 
 This repository currently contains the current local game slice and the active design package:
 
-- the current browser-playable `Golem of Seismic` prototype
+- the current browser-playable `Golem of the Seismic` prototype
 - core concept and master GDD
 - lore and narrative delivery
 - room architecture and chamber scripts
