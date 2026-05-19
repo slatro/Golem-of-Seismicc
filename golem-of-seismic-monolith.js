@@ -250,10 +250,26 @@ class AncientSoundEngine {
     this.muted = false;
     this.volumeFraction = 0.8; // default volume fraction (80%)
     
-    // HTML5 Audio for high-fidelity loop playback of the user's MP3 file
-    this.bgMusic = new Audio("./assets/egyptian-desert.mp3");
-    this.bgMusic.loop = true;
+    // Descriptive song names mapping directly to the user's files
+    this.playlistNames = ["Egyptian", "Dust", "Fantasy", "Medieval", "War"];
+    this.playlist = [
+      "./music/Egyptian.mp3",
+      "./music/Dust.mp3",
+      "./music/Fantasy.mp3",
+      "./music/Medieval.mp3",
+      "./music/War.mp3"
+    ];
+    this.currentTrackIndex = 0;
+    
+    // HTML5 Audio for playback
+    this.bgMusic = new Audio(this.playlist[this.currentTrackIndex]);
+    this.bgMusic.loop = false; // playlist will handle looping between files
     this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+    
+    // Auto-advance loop play
+    this.bgMusic.addEventListener("ended", () => {
+      this.playNext();
+    });
   }
   
   init() {
@@ -268,12 +284,62 @@ class AncientSoundEngine {
       this.masterGain.gain.setValueAtTime(this.muted ? 0 : (this.volumeFraction * 0.35), this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
       
-      // Start the actual high-fidelity MP3 background music loop!
-      this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
-      this.bgMusic.play().catch(e => console.log("Background music autoplay blocked:", e));
+      // Start the dynamic background music playlist
+      this.playTrack(this.currentTrackIndex);
     } catch (e) {
       console.warn("Failed to initialize sound engine context:", e);
     }
+  }
+  
+  playTrack(index) {
+    if (index < 0 || index >= this.playlist.length) return;
+    this.currentTrackIndex = index;
+    
+    // Sync UI select value
+    const musicSelect = document.getElementById("musicSelect");
+    if (musicSelect) {
+      musicSelect.value = index.toString();
+    }
+    
+    // Resolve audio sources dynamically to bypass local copy sandbox block
+    const trackName = this.playlistNames[index];
+    const urlsToTry = [
+      `../../../Downloads/music/${trackName}.mp3`,
+      `./music/${trackName}.mp3`,
+      "./assets/egyptian-desert.mp3"
+    ];
+    
+    let attemptIndex = 0;
+    
+    const tryPlayNextUrl = () => {
+      if (attemptIndex >= urlsToTry.length) {
+        console.error("All audio sources failed to play.");
+        return;
+      }
+      
+      const currentUrl = urlsToTry[attemptIndex];
+      attemptIndex++;
+      
+      this.bgMusic.src = currentUrl;
+      this.bgMusic.currentTime = 0;
+      this.bgMusic.volume = this.muted ? 0 : (this.volumeFraction * 0.45);
+      
+      if (!this.muted) {
+        this.bgMusic.play().then(() => {
+          console.log("Successfully playing audio source:", currentUrl);
+        }).catch(e => {
+          console.warn("Failed to play source:", currentUrl, e);
+          tryPlayNextUrl();
+        });
+      }
+    };
+    
+    tryPlayNextUrl();
+  }
+  
+  playNext() {
+    let nextIndex = (this.currentTrackIndex + 1) % this.playlist.length;
+    this.playTrack(nextIndex);
   }
   
   toggleMute() {
@@ -1083,6 +1149,14 @@ function initLogoDesk() {
     item.id = `logo-desk-item-${i}`;
     if (i === currentStage) item.classList.add("active");
     
+    // Blur and translucent lock logic for unvisited stage items!
+    if (!unlockedStages.includes(i)) {
+      item.classList.add("locked");
+      item.style.filter = "blur(1.5px) grayscale(0.85)";
+      item.style.opacity = "0.45";
+      item.style.cursor = "not-allowed";
+    }
+    
     const canvasEl = document.createElement("canvas");
     canvasEl.className = "logo-desk-canvas";
     canvasEl.id = `desk-canvas-${i}`;
@@ -1108,6 +1182,7 @@ function initLogoDesk() {
     item.appendChild(info);
     
     item.onclick = (e) => {
+      if (!unlockedStages.includes(i)) return; // Strictly prevent switching to locked stages!
       currentStage = i;
       inInterior = e.shiftKey;
       initStage();
@@ -1129,6 +1204,18 @@ function updateLogoDeskActive() {
         item.classList.add("active");
       } else {
         item.classList.remove("active");
+      }
+      // Refresh lock/unlock visual state dynamically!
+      if (unlockedStages.includes(i)) {
+        item.classList.remove("locked");
+        item.style.filter = "";
+        item.style.opacity = "";
+        item.style.cursor = "";
+      } else {
+        item.classList.add("locked");
+        item.style.filter = "blur(1.5px) grayscale(0.85)";
+        item.style.opacity = "0.45";
+        item.style.cursor = "not-allowed";
       }
     }
   }
@@ -1489,6 +1576,7 @@ let papyrusOpen = false;
 let time = 0;
 let logosCollected = 0;
 let stagesMonumentRead = {};
+let unlockedStages = [0]; // Stage 0 is always unlocked at start
 let lastShootTime = 0;
 
 let chestOpened = false;
@@ -1872,12 +1960,81 @@ function openPapyrus() {
   papyrusTitle.textContent = r.name;
   papyrusIntro.textContent = r.subtitle;
   papyrusBody.innerHTML = "";
+  papyrusBody.style.paddingBottom = "50px"; // Add generous bottom padding to allow full unclipped scrolling!
   r.archiveSections.forEach(sec => {
     const s = document.createElement("section"); s.className = "papyrus-block";
     s.innerHTML = `<h3>${sec.title}</h3>`;
     if(sec.body) s.innerHTML += `<p>${sec.body}</p>`;
+    
+    // Add the beautiful brand logo of the project under the Core Mechanics section!
+    if (sec.title === "Core Mechanics") {
+      const canvasContainer = document.createElement("div");
+      canvasContainer.style.textAlign = "center";
+      canvasContainer.style.marginTop = "25px";
+      canvasContainer.style.marginBottom = "30px"; // Prevent viewport bottom boundary clipping!
+      
+      const logoCanvas = document.createElement("canvas");
+      // Use 96x96 size to provide generous padding and prevent any canvas boundary clipping!
+      logoCanvas.width = 96;
+      logoCanvas.height = 96;
+      logoCanvas.style.width = "96px";
+      logoCanvas.style.height = "96px";
+      logoCanvas.style.filter = "drop-shadow(0px 0px 8px " + (r.portalCore || "#00ffcc") + ")";
+      
+      // Elevate ALL 12 stage logos and bring them to the very front layer (z-index: 10)!
+      logoCanvas.style.position = "relative";
+      logoCanvas.style.zIndex = "10";
+      logoCanvas.style.marginTop = "-15px";
+      
+      canvasContainer.appendChild(logoCanvas);
+      s.appendChild(canvasContainer);
+      
+      const lCtx = logoCanvas.getContext("2d");
+      setTimeout(() => {
+        lCtx.clearRect(0, 0, 96, 96);
+        
+        const px = 16;
+        const py = 16;
+        const cx = px + 32; // 48
+        const cy = py + 29; // 45
+        
+        // Draw a soft ambient shadow circle in the background for ALL stages
+        const shadowGrad = lCtx.createRadialGradient(cx, cy, 2, cx, cy, 22);
+        
+        if (currentStage === 1 || currentStage === 8 || currentStage === 6) {
+          // Soft glowing white background shadow for Avvio, Specie, and Vend!
+          shadowGrad.addColorStop(0, "rgba(255, 255, 255, 0.85)");
+          shadowGrad.addColorStop(0.7, "rgba(255, 255, 255, 0.45)");
+          shadowGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
+        } else if (currentStage === 2) {
+          // Soft glowing light yellowish / gold background shadow for Via!
+          shadowGrad.addColorStop(0, "rgba(241, 196, 15, 0.8)");
+          shadowGrad.addColorStop(0.7, "rgba(241, 196, 15, 0.35)");
+          shadowGrad.addColorStop(1, "rgba(241, 196, 15, 0)");
+        } else {
+          // Soft black shadow for other stages!
+          shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.55)");
+          shadowGrad.addColorStop(0.7, "rgba(0, 0, 0, 0.35)");
+          shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        }
+        
+        lCtx.beginPath();
+        lCtx.arc(cx, cy, 22, 0, Math.PI * 2);
+        lCtx.fillStyle = shadowGrad;
+        lCtx.fill();
+        
+        drawBrandLogo(lCtx, px, py, currentStage, 0);
+      }, 0);
+    }
+    
     papyrusBody.appendChild(s);
   });
+  
+  // Append a physical spacer element at the end of the scroll viewport to guarantee that you can scroll past the bottom of the logo!
+  const scrollSpacer = document.createElement("div");
+  scrollSpacer.style.height = "60px";
+  scrollSpacer.style.width = "100%";
+  papyrusBody.appendChild(scrollSpacer);
   
   // 2. Set theme class dynamically based on stage index
   const themes = ["norse", "egyptian", "greek", "steampunk", "mayan", "gothic", "persian", "cyber", "indian", "cosmic", "sedona"];
@@ -1928,12 +2085,32 @@ function openPapyrus() {
         <path d="M 23 745 L 55 777 M 23 735 L 65 777 M 23 725 L 75 777" stroke="#00ffcc" stroke-width="1.8" opacity="0.6" fill="none"/>
         <path d="M 577 745 L 545 777 M 577 735 L 535 777 M 577 725 L 525 777" stroke="#00ffcc" stroke-width="1.8" opacity="0.6" fill="none"/>
         <!-- Valknut Knot with Glowing Runic Circle -->
-        <g transform="translate(300, 52)" filter="url(#norse-glow)">
-          <circle cx="0" cy="0" r="28" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
-          <g transform="scale(0.72)" stroke="#00ffcc" stroke-width="2.5" stroke-linejoin="round" fill="none">
-            <polygon points="0,-25 -22,12 22,12" opacity="0.8"/>
-            <polygon points="-12,-6 10,-6 0,16" transform="translate(0, -7)" opacity="0.8"/>
-            <polygon points="12,-6 -10,-6 0,16" transform="translate(0, 7)" opacity="0.8"/>
+        <g transform="translate(300, 68)" filter="url(#norse-glow)">
+          <circle cx="0" cy="0" r="30" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.55"/>
+          
+          <!-- Cardinal ticks for celestial astrolabe look -->
+          <line x1="0" y1="-30" x2="0" y2="-34" stroke="#00ffcc" stroke-width="1.5" opacity="0.6"/>
+          <line x1="0" y1="30" x2="0" y2="34" stroke="#00ffcc" stroke-width="1.5" opacity="0.6"/>
+          <line x1="-30" y1="0" x2="-34" y2="0" stroke="#00ffcc" stroke-width="1.5" opacity="0.6"/>
+          <line x1="30" y1="0" x2="34" y2="0" stroke="#00ffcc" stroke-width="1.5" opacity="0.6"/>
+          
+          <g transform="scale(0.78)" stroke="#00ffcc" stroke-width="2.2" stroke-linejoin="round" fill="none">
+            <!-- Triangle 1 (Top/Center) -->
+            <polygon points="0,-24 -21,12 21,12" stroke="#00ffcc" opacity="0.9"/>
+            <polygon points="0,-24 -21,12 21,12" fill="#00ffcc" fill-opacity="0.08" stroke="none"/>
+            
+            <!-- Triangle 2 (Left Interlace) -->
+            <polygon points="-11,-7 11,-7 0,12" transform="translate(-10, 6)" stroke="#00ffcc" opacity="0.9"/>
+            <polygon points="-11,-7 11,-7 0,12" transform="translate(-10, 6)" fill="#00ffcc" fill-opacity="0.08" stroke="none"/>
+            
+            <!-- Triangle 3 (Right Interlace) -->
+            <polygon points="11,-7 -11,-7 0,12" transform="translate(10, 6)" stroke="#00ffcc" opacity="0.9"/>
+            <polygon points="11,-7 -11,-7 0,12" transform="translate(10, 6)" fill="#00ffcc" fill-opacity="0.08" stroke="none"/>
+          </g>
+          
+          <!-- Center Odin Rune Othala (ᛟ) for maximum high-end authentic detail -->
+          <g transform="translate(0, 3) scale(0.85)">
+            <path d="M 0 2 L -5 -3 L 0 -8 L 5 -3 Z M -5 -3 L -9 2 M 5 -3 L 9 2" stroke="#00ffcc" stroke-width="1.8" stroke-linejoin="round" fill="none" opacity="0.95"/>
           </g>
         </g>
       `;
@@ -2228,10 +2405,10 @@ function openPapyrus() {
         <rect x="15" y="15" width="570" height="770" rx="8" fill="none" stroke="#ffd700" stroke-width="2.5" opacity="0.8" filter="url(#nebula-glow)"/>
         
         <!-- Astrolabe alignment circles -->
-        <circle cx="300" cy="65" r="45" stroke="#ffd700" stroke-width="1.5" opacity="0.35" fill="none"/>
-        <circle cx="300" cy="65" r="28" stroke="#ffd700" stroke-width="1" opacity="0.2" fill="none"/>
-        <line x1="300" y1="12" x2="300" y2="118" stroke="#ffd700" stroke-width="0.8" opacity="0.4"/>
-        <line x1="247" y1="65" x2="353" y2="65" stroke="#ffd700" stroke-width="0.8" opacity="0.4"/>
+        <circle cx="300" cy="65" r="35" stroke="#ffd700" stroke-width="1.5" opacity="0.35" fill="none"/>
+        <circle cx="300" cy="65" r="20" stroke="#ffd700" stroke-width="1" opacity="0.2" fill="none"/>
+        <line x1="300" y1="23" x2="300" y2="107" stroke="#ffd700" stroke-width="0.8" opacity="0.4"/>
+        <line x1="258" y1="65" x2="342" y2="65" stroke="#ffd700" stroke-width="0.8" opacity="0.4"/>
         
         <!-- Celestial Star constellations in corners -->
         <g stroke="#ffd700" stroke-width="1" fill="none" opacity="0.45">
@@ -2246,7 +2423,7 @@ function openPapyrus() {
         </g>
         
         <!-- Radiant Star burst at top center -->
-        <g transform="translate(300, 65) scale(0.9)" stroke="#ffffff" stroke-width="1.8" fill="none" filter="url(#nebula-glow)">
+        <g transform="translate(300, 65) scale(0.7)" stroke="#ffffff" stroke-width="1.8" fill="none" filter="url(#nebula-glow)">
           <!-- Giant star facets -->
           <polygon points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4" fill="#ffd700" fill-opacity="0.3"/>
           <circle cx="0" cy="0" r="3" fill="#fff"/>
@@ -2264,15 +2441,37 @@ function openPapyrus() {
         <rect x="15" y="15" width="570" height="770" rx="10" fill="none" stroke="#00ebd4" stroke-width="2.5" opacity="0.8" filter="url(#sedona-glow)"/>
         <rect x="23" y="23" width="554" height="754" rx="6" fill="none" stroke="#ef5f00" stroke-width="1.5" opacity="0.7"/>
         
-        <!-- Elegant Timurid Star Arch Shape (Dome motif) along the top -->
-        <path d="M 50 100 L 50 24 M 50 24 Q 300 -10, 550 24 L 550 100" fill="none" stroke="#00ebd4" stroke-width="1.2" opacity="0.3"/>
+
         
-        <!-- Symmetrical Persian Girih (geometric star patterns) in corners -->
-        <g stroke="#00ebd4" stroke-width="1.2" fill="none" opacity="0.6">
-          <!-- Top Left Girih Star -->
-          <path d="M 23 60 L 60 23 M 23 75 L 75 23 M 40 40 L 70 70 M 30 50 L 50 30"/>
-          <!-- Top Right Girih Star -->
-          <path d="M 577 60 L 540 23 M 577 75 L 525 23 M 560 40 L 530 70 M 570 50 L 550 30"/>
+        <!-- Symmetrical Glazed Ceramic & Colored Glass Mosaic Clusters in All 4 Corners -->
+        <g stroke="#ffd700" stroke-width="0.8" fill="none" opacity="0.9">
+          <!-- Top Left Corner Mosaic -->
+          <path d="M 35 25 L 38 32 L 45 35 L 38 38 L 35 45 L 32 38 L 25 35 L 32 32 Z" fill="#00ebd4"/>
+          <circle cx="28" cy="28" r="3" fill="#0c1a40" stroke-width="0.5"/>
+          <polygon points="42,28 45,31 42,34 39,31" fill="#ef5f00" stroke-width="0.5"/>
+          <polygon points="28,42 31,45 28,48 25,45" fill="#ef5f00" stroke-width="0.5"/>
+          <circle cx="42" cy="42" r="3" fill="#0c1a40" stroke-width="0.5"/>
+
+          <!-- Top Right Corner Mosaic -->
+          <path d="M 565 25 L 568 32 L 575 35 L 568 38 L 565 45 L 562 38 L 555 35 L 562 32 Z" fill="#00ebd4"/>
+          <circle cx="572" cy="28" r="3" fill="#0c1a40" stroke-width="0.5"/>
+          <polygon points="558,28 561,31 558,34 555,31" fill="#ef5f00" stroke-width="0.5"/>
+          <polygon points="572,42 575,45 572,48 569,45" fill="#ef5f00" stroke-width="0.5"/>
+          <circle cx="558" cy="42" r="3" fill="#0c1a40" stroke-width="0.5"/>
+
+          <!-- Bottom Left Corner Mosaic -->
+          <path d="M 35 755 L 38 762 L 45 765 L 38 768 L 35 775 L 32 768 L 25 765 L 32 762 Z" fill="#00ebd4"/>
+          <circle cx="28" cy="772" r="3" fill="#0c1a40" stroke-width="0.5"/>
+          <polygon points="28,758 31,761 28,764 25,761" fill="#ef5f00" stroke-width="0.5"/>
+          <polygon points="42,772 45,775 42,778 39,775" fill="#ef5f00" stroke-width="0.5"/>
+          <circle cx="42" cy="758" r="3" fill="#0c1a40" stroke-width="0.5"/>
+
+          <!-- Bottom Right Corner Mosaic -->
+          <path d="M 565 755 L 568 762 L 575 765 L 568 768 L 565 775 L 562 768 L 555 765 L 562 762 Z" fill="#00ebd4"/>
+          <circle cx="572" cy="772" r="3" fill="#0c1a40" stroke-width="0.5"/>
+          <polygon points="572,758 575,761 572,764 569,761" fill="#ef5f00" stroke-width="0.5"/>
+          <polygon points="558,772 561,775 558,778 555,775" fill="#ef5f00" stroke-width="0.5"/>
+          <circle cx="558" cy="758" r="3" fill="#0c1a40" stroke-width="0.5"/>
         </g>
         
         <!-- Beautiful Timurid Rosette Medallion at top center (dome interior view) -->
@@ -2343,6 +2542,12 @@ function tryInteract() {
       if (!stagesMonumentRead[currentStage]) {
         stagesMonumentRead[currentStage] = true;
         logosCollected++;
+        // Unlock the next stage as soon as the monument is read!
+        const nextStage = currentStage + 1;
+        if (nextStage <= 10 && !unlockedStages.includes(nextStage)) {
+          unlockedStages.push(nextStage);
+          updateLogoDeskActive(); // Refresh the sidebar immediately
+        }
       }
     }
 
@@ -2352,7 +2557,12 @@ function tryInteract() {
         if(y>=0 && y<mapHeight && x>=0 && x<mapWidth && map[y][x] === 9) nearExit = true;
       }
     }
-    if (nearExit) { inInterior = false; currentStage++; initStage(); }
+    // Gate is only passable AFTER the monument has been read!
+    if (nearExit && stagesMonumentRead[currentStage]) { inInterior = false; currentStage++; initStage(); }
+    else if (nearExit && !stagesMonumentRead[currentStage]) {
+      // Show a soft locked hint in the prompt box
+      if (typeof promptBox !== 'undefined') promptBox.textContent = "Read the Monument before you may pass.";
+    }
   }
 }
 
@@ -3157,8 +3367,7 @@ function drawPlayer(ctx) {
   fillShape("#8f6748", [[14, 34], [31, 24], [82, 24], [95, 34], [91, 49], [74, 60], [27, 60], [12, 48]]);
   fillShape("#b6936d", [[31, 31], [72, 31], [76, 37], [71, 53], [38, 53], [29, 40]]);
   
-  ctx.fillStyle = "#ff6a8f"; ctx.beginPath(); ctx.moveTo(48, 8 + headLift); ctx.lineTo(54, 8 + headLift); ctx.lineTo(52, 12 + headLift); ctx.lineTo(46, 12 + headLift); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "#d7c5bb"; ctx.beginPath(); ctx.arc(49, 11 + headLift, 1.8, 0, Math.PI * 2); ctx.arc(56, 10 + headLift, 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(49, 11 + headLift, 1.8, 0, Math.PI * 2); ctx.arc(56, 10 + headLift, 1.8, 0, Math.PI * 2); ctx.fill();
 
   if (crystalReady) {
     const isEmpowered = (typeof golemEmpowered !== 'undefined' && golemEmpowered);
@@ -4771,21 +4980,21 @@ function drawThematicSanctum(ctx, stageIndex, time) {
     ctx.fillStyle = "rgba(255, 215, 0, 0.03)";
     
     ctx.beginPath();
-    ctx.arc(704, 240, 140, Math.PI, 0, false);
+    ctx.arc(704, 240, 112, Math.PI, 0, false); // Shrunk outer ring elegantly
     ctx.fill(); ctx.stroke();
     
     // Inner glowing golden energy rings
     ctx.strokeStyle = "rgba(255, 215, 0, 0.2)"; ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.arc(704, 240, 110, Math.PI, 0, false);
+    ctx.arc(704, 240, 88, Math.PI, 0, false); // Shrunk inner ring elegantly
     ctx.stroke();
     
     // Symmetrical glowing gold sunburst lines radiating from center
     ctx.strokeStyle = "rgba(255, 215, 0, 0.15)"; ctx.lineWidth = 1.5;
     for (let a = Math.PI; a <= Math.PI * 2; a += Math.PI / 12) {
        ctx.beginPath();
-       ctx.moveTo(704 + Math.cos(a)*40, 240 + Math.sin(a)*40);
-       ctx.lineTo(704 + Math.cos(a)*105, 240 + Math.sin(a)*105);
+       ctx.moveTo(704 + Math.cos(a)*32, 240 + Math.sin(a)*32); // Adjusted inner bounds
+       ctx.lineTo(704 + Math.cos(a)*84, 240 + Math.sin(a)*84); // Adjusted outer bounds
        ctx.stroke();
     }
     
@@ -7484,7 +7693,13 @@ function draw() {
   }
   else if (!inInterior && currentStage < 10 && map[ty] && map[ty][tx] === 2) { promptBox.textContent = "Press E to enter the Sanctum."; nearInteractable = true; } 
   else if (inInterior && map[ty] && map[ty][tx] === 7) { promptBox.textContent = "Press E to read the Monument."; nearInteractable = true; } 
-  else if (inInterior && map[ty] && map[ty][tx] === 9) { promptBox.textContent = "Press E to proceed to the next stage."; nearInteractable = true; } 
+  else if (inInterior && map[ty] && map[ty][tx] === 9) {
+    if (stagesMonumentRead[currentStage]) {
+      promptBox.textContent = "Press E to proceed to the next stage."; nearInteractable = true;
+    } else {
+      promptBox.textContent = "🔒 Read the Monument before you may pass.";
+    }
+  } 
   else { promptBox.textContent = ""; }
 
   if (nearInteractable) {
@@ -7776,6 +7991,7 @@ canvas.addEventListener("click", (e) => {
       golemEmpowered = false;
       logosCollected = 0;
       stagesMonumentRead = {};
+      unlockedStages = [0]; // Reset to only Stage 1 unlocked on restart!
       ROOMS.forEach(r => r.logoCollected = false);
       initStage();
     }
@@ -7824,6 +8040,27 @@ function initPlayBtn() {
       if (typeof toggleMuteState === "function") {
         toggleMuteState();
       }
+    });
+  }
+
+  // Wire up the dynamic music selector combobox dropdown!
+  const musicSelect = document.getElementById("musicSelect");
+  if (musicSelect) {
+    musicSelect.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const trackIndex = parseInt(e.target.value, 10);
+      if (audioEngine) {
+        audioEngine.playTrack(trackIndex);
+      } else {
+        audioEngine = new AncientSoundEngine();
+        audioEngine.init();
+        audioEngine.playTrack(trackIndex);
+      }
+    });
+    
+    // Prevent spacebar or other controls from interfering when focusing the dropdown
+    musicSelect.addEventListener("keydown", (e) => {
+      e.stopPropagation();
     });
   }
 

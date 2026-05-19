@@ -214,14 +214,19 @@ kbd {
 .papyrus-sheet {
   position: relative;
   width: min(580px, 92%) !important;
-  height: 80vh !important;
+  height: auto !important; /* Scale dynamically based on content */
+  max-height: 82vh !important; /* Fit elegantly within viewport height */
   display: flex !important;
   flex-direction: column !important;
-  padding: 80px 85px 55px !important; /* Elegant spacious inside spacing */
-  overflow: visible !important; /* Changed to visible to let close button float cleanly outside! */
+  padding: 75px 85px 65px !important; /* Perfect spacious padding, leaving 65px bottom margin for logos */
+  overflow-y: auto !important; /* Scroll entire sheet if needed to prevent clipping */
+  scrollbar-width: none; /* Hide scrollbars for absolute visual purity */
   color: #e2e8f0;
   font-family: "Cinzel", "Georgia", serif;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.papyrus-sheet::-webkit-scrollbar {
+  display: none; /* Webkit scrollbar hidden */
 }
 
 .papyrus-sheet::before {
@@ -230,8 +235,8 @@ kbd {
 
 .papyrus-close {
   position: absolute;
-  top: -15px !important;
-  right: -45px !important; /* Elegant floating placement cleanly outside the card right edge */
+  top: 15px !important; /* Perfect vertical alignment relative to the tablet header block */
+  right: -50px !important; /* Shifted beautifully OUTSIDE on the right side by 50px as requested! */
   width: 36px !important;
   height: 36px !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -311,13 +316,8 @@ kbd {
 .papyrus-body {
   display: grid;
   gap: 12px;
-  flex: 1; /* Automatically fill remaining vertical space strictly inside the frame */
-  overflow-y: auto; /* Enables seamless internal scrolling */
-  scrollbar-width: none; /* Hide scrollbars for absolute visual purity */
-  padding-right: 4px;
-}
-.papyrus-body::-webkit-scrollbar {
-  display: none; /* Webkit browser compatibility to keep scrollbar hidden */
+  flex: none !important; /* Let content determine height */
+  overflow: visible !important; /* Allow all brand logos and glows to pop without clipping! */
 }
 
 .papyrus-block {

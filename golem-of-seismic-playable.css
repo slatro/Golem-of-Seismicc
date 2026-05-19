@@ -214,14 +214,19 @@ kbd {
 .papyrus-sheet {
   position: relative;
   width: min(580px, 92%) !important;
-  height: 80vh !important;
+  height: auto !important; /* Scale dynamically based on content */
+  max-height: 82vh !important; /* Fit elegantly within viewport height */
   display: flex !important;
   flex-direction: column !important;
-  padding: 80px 85px 55px !important; /* Elegant spacious inside spacing */
-  overflow: visible !important; /* Changed to visible to let close button float cleanly outside! */
+  padding: 75px 85px 65px !important; /* Perfect spacious padding, leaving 65px bottom margin for logos */
+  overflow-y: auto !important; /* Scroll entire sheet if needed to prevent clipping */
+  scrollbar-width: none; /* Hide scrollbars for absolute visual purity */
   color: #e2e8f0;
   font-family: "Cinzel", "Georgia", serif;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.papyrus-sheet::-webkit-scrollbar {
+  display: none; /* Webkit scrollbar hidden */
 }
 
 .papyrus-sheet::before {
@@ -230,8 +235,8 @@ kbd {
 
 .papyrus-close {
   position: absolute;
-  top: -15px !important;
-  right: -45px !important; /* Elegant floating placement cleanly outside the card right edge */
+  top: 15px !important; /* Perfect vertical alignment relative to the tablet header block */
+  right: -50px !important; /* Shifted beautifully OUTSIDE on the right side by 50px as requested! */
   width: 36px !important;
   height: 36px !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -311,13 +316,8 @@ kbd {
 .papyrus-body {
   display: grid;
   gap: 12px;
-  flex: 1; /* Automatically fill remaining vertical space strictly inside the frame */
-  overflow-y: auto; /* Enables seamless internal scrolling */
-  scrollbar-width: none; /* Hide scrollbars for absolute visual purity */
-  padding-right: 4px;
-}
-.papyrus-body::-webkit-scrollbar {
-  display: none; /* Webkit browser compatibility to keep scrollbar hidden */
+  flex: none !important; /* Let content determine height */
+  overflow: visible !important; /* Allow all brand logos and glows to pop without clipping! */
 }
 
 .papyrus-block {
@@ -1564,5 +1564,58 @@ kbd {
   border-radius: 12px !important;
   box-shadow: 0 3px 6px rgba(0,0,0,0.4) !important;
 }
+
+/* Breathtaking custom premium music select combobox to the LEFT of mute-btn */
+.music-select {
+  position: absolute;
+  top: 1.2%;
+  left: calc(18.2% - 154px); /* Perfectly placed to the left of the speaker icon! */
+  width: 142px;
+  height: 44px;
+  background: radial-gradient(circle at 35% 35%, #4e3124 0%, #2b1710 70%, #150b07 100%);
+  border: 2.5px solid #ecd685;
+  border-radius: 12px;
+  color: #fff1ba;
+  font-family: Georgia, serif;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 28px 0 12px;
+  cursor: pointer;
+  outline: none;
+  z-index: 999;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 2px rgba(255, 255, 255, 0.25), 
+    0 0 10px rgba(236, 214, 133, 0.25);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ecd685'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 18px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.music-select:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 
+    0 6px 15px rgba(236, 214, 133, 0.5), 
+    inset 0 1px 3px rgba(255, 255, 255, 0.4), 
+    0 0 15px rgba(255, 255, 255, 0.3);
+  transform: scale(1.03);
+}
+.music-select:active {
+  transform: scale(0.97);
+}
+.music-select option {
+  background: #23120a;
+  color: #fff1ba;
+  font-family: Georgia, serif;
+  font-weight: bold;
+}
+
 
 

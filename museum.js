@@ -528,6 +528,13 @@ function drawPlayer() {
     [ox + 25, oy + 5], [ox + 40, oy + 0], [ox + 45, oy + 15], [ox + 28, oy + 20],
   ]);
 
+  // Two white eyes matching the size (1.8 radius) and horizontal placement
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(ox + 34, oy + 10, 1.8, 0, Math.PI * 2);
+  ctx.arc(ox + 40, oy + 9, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
 }
 
