@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Golem of the Seismic - Playable Prototype</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="./golem-of-seismic-playable.css?v=30" />
+    <link rel="stylesheet" href="./golem-of-seismic-playable.css?v=31" />
     <style>
       /* Play Overlay Styles */
       .play-overlay {
@@ -238,74 +238,137 @@
     <main class="shell">
       <section class="play-area">
         <div id="gameContainer" style="position: relative; width: 100%; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34); border: 1px solid rgba(255, 228, 240, 0.08);">
-          <canvas id="game" width="1280" height="720" tabindex="0" style="outline: none;"></canvas>
-          
-          <button id="muteBtn" class="mute-btn" title="Toggle Sound">
-            <svg class="mute-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-          </button>
-          <select id="musicSelect" class="music-select" title="Select Music">
-            <option value="0">Egyptian (Default)</option>
-            <option value="1">Dust</option>
-            <option value="2">Fantasy</option>
-            <option value="3">Medieval</option>
-            <option value="4">War</option>
-          </select>
-          <div id="playOverlay" class="play-overlay">
-            <div class="overlay-header">
-              <span class="vault-eyebrow">AWAKEN THE SEISMIC CORE</span>
-              <h2 class="vault-title">HOW TO PLAY</h2>
-            </div>
+          <div class="canvas-container">
+            <canvas id="game" width="1280" height="720" tabindex="0" style="outline: none;"></canvas>
             
-            <div class="controls-card">
-              <div class="control-row">
-                <kbd class="key-cap">A</kbd>
-                <kbd class="key-cap">D</kbd>
-                <span class="control-text">Move Golem Left/Right</span>
+            <button id="muteBtn" class="mute-btn" title="Toggle Sound">
+              <svg class="mute-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+            </button>
+            <select id="musicSelect" class="music-select" title="Select Music">
+              <option value="0">EGYPTIAN (DEFAULT)</option>
+              <option value="1">DUST</option>
+              <option value="2">FANTASY</option>
+              <option value="3">MEDIEVAL</option>
+              <option value="4">WAR</option>
+            </select>
+            <div id="playOverlay" class="play-overlay">
+              <div class="overlay-header">
+                <span class="vault-eyebrow">AWAKEN THE SEISMIC CORE</span>
+                <h2 class="vault-title">HOW TO PLAY</h2>
               </div>
-              <div class="control-row">
-                <kbd class="key-cap wide">Space</kbd>
-                <span class="control-text">Gravity Leap Jump</span>
+              
+              <div class="controls-card">
+                <div class="control-row">
+                  <kbd class="key-cap">A</kbd>
+                  <kbd class="key-cap">D</kbd>
+                  <span class="control-text">Move Golem Left/Right</span>
+                </div>
+                <div class="control-row">
+                  <kbd class="key-cap wide">Space</kbd>
+                  <span class="control-text">Gravity Leap Jump</span>
+                </div>
+                <div class="control-row">
+                  <kbd class="key-cap">E</kbd>
+                  <span class="control-text">Read Lore Tablets</span>
+                </div>
+                <div class="control-row">
+                  <kbd class="key-cap">F</kbd>
+                  <span class="control-text">Shoot Seismic Pulse</span>
+                </div>
               </div>
-              <div class="control-row">
-                <kbd class="key-cap">E</kbd>
-                <span class="control-text">Read Lore Tablets</span>
-              </div>
-              <div class="control-row">
-                <kbd class="key-cap">F</kbd>
-                <span class="control-text">Shoot Seismic Pulse</span>
+
+              <div class="play-wrapper">
+                <button id="playBtn" class="circular-play-btn" title="Enter Vaults">
+                  <svg class="play-icon" viewBox="0 0 24 24">
+                    <defs>
+                      <linearGradient id="cyberPlayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="60%" stop-color="#e0f7f4" />
+                        <stop offset="100%" stop-color="#80e5d6" />
+                      </linearGradient>
+                    </defs>
+                    <!-- Outer glowing accent polygon -->
+                    <path d="M7.5 4.5 l12 7.5 l-12 7.5 z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-linejoin="round" opacity="0.95" />
+                    <!-- Inner solid polished 3D triangle -->
+                    <path d="M9 6.5 l8.8 5.5 l-8.8 5.5 z" fill="url(#cyberPlayGrad)" stroke="rgba(255,255,255,0.6)" stroke-width="0.5" stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <span class="play-hint">TAP TO PLAY!</span>
               </div>
             </div>
+            <!-- Interactive Action Prompt HUD Overlay -->
+            <div id="promptBox" class="prompt"></div>
+            
+            <!-- Premium Mobile Touch Controls Overlay -->
+            <div id="mobileTouchControls" class="mobile-touch-controls">
+              <!-- Left: Virtual Analog Joystick -->
+              <div class="joystick-container">
+                <div id="joystickBase" class="joystick-base">
+                  <div id="joystickKnob" class="joystick-knob"></div>
+                </div>
+              </div>
+              
+              <!-- Right: Action buttons (Attack, Jump & Contextual Interact) -->
+              <div class="action-container">
+                <!-- Contextual Interaction E button (Emerald/Teal glow, initially hidden/sliding) -->
+                <button id="touchBtnInteract" class="touch-btn btn-interact" title="Interact">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/>
+                  </svg>
+                  <span class="touch-btn-label">INTERACT</span>
+                </button>
 
-            <div class="play-wrapper">
-              <button id="playBtn" class="circular-play-btn" title="Enter Vaults">
-                <svg class="play-icon" viewBox="0 0 24 24">
-                  <defs>
-                    <linearGradient id="cyberPlayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#ffffff" />
-                      <stop offset="60%" stop-color="#e0f7f4" />
-                      <stop offset="100%" stop-color="#80e5d6" />
-                    </linearGradient>
-                  </defs>
-                  <!-- Outer glowing accent polygon -->
-                  <path d="M7.5 4.5 l12 7.5 l-12 7.5 z" fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-linejoin="round" opacity="0.95" />
-                  <!-- Inner solid polished 3D triangle -->
-                  <path d="M9 6.5 l8.8 5.5 l-8.8 5.5 z" fill="url(#cyberPlayGrad)" stroke="rgba(255,255,255,0.6)" stroke-width="0.5" stroke-linejoin="round" />
+                <!-- Attack F button (Gold/Orange glow) -->
+                <button id="touchBtnAttack" class="touch-btn btn-attack" title="Seismic Pulse">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                  </svg>
+                  <span class="touch-btn-label">FIRE</span>
+                </button>
+                
+                <!-- Jump Space button (Pink/Magenta glow) -->
+                <button id="touchBtnJump" class="touch-btn btn-jump" title="Gravity Leap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                    <polyline points="18 9 12 3 6 9"></polyline>
+                  </svg>
+                  <span class="touch-btn-label">JUMP</span>
+                </button>
+              </div>
+              
+              <!-- Floating Fullscreen button at bottom-right corner -->
+              <button id="mobileFullscreenBtn" class="mobile-fullscreen-btn" title="Fullscreen & Rotate">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
                 </svg>
               </button>
-              <span class="play-hint">TAP TO PLAY!</span>
+            </div>
+
+            <!-- Luxury Interactive Victory Screen Buttons HTML Overlay -->
+            <div id="victoryOverlay" class="victory-overlay hidden">
+              <button id="victoryRestartBtn" class="victory-btn btn-restart" title="Restart Archive">
+                <svg class="victory-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                <span>RESTART ARCHIVE</span>
+              </button>
+              <button id="victoryTwitterBtn" class="victory-btn btn-twitter" title="Share On Twitter">
+                <svg class="victory-btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                <span>SHARE ON TWITTER</span>
+              </button>
             </div>
           </div>
-          <!-- Interactive Action Prompt HUD Overlay -->
-          <div id="promptBox" class="prompt"></div>
         </div>
 
         <div id="papyrusOverlay" class="papyrus-overlay hidden" aria-hidden="true">
           <div class="papyrus-wrapper" style="position: relative; width: min(580px, 92%); display: flex; flex-direction: column; overflow: visible !important;">
             <article class="papyrus-sheet" style="width: 100% !important;">
               <div id="monolithCanvasContainer"></div>
-              <p id="papyrusEyebrow" class="papyrus-eyebrow">Runic Monolith Tablet</p>
+              <p id="papyrusEyebrow" class="papyrus-eyebrow">RUNIC MONOLITH TABLET</p>
               <h2 id="papyrusTitle">Ancient Archives</h2>
               <p id="papyrusIntro" class="papyrus-intro"></p>
               <div id="papyrusBody" class="papyrus-body"></div>
@@ -317,7 +380,7 @@
         <aside class="panel">
           <!-- Arched Gold Plaque Header (Reference Alignment) -->
           <div class="panel-header-banner">
-            Golem of the Seismic
+            GOLEM OF THE SEISMIC
           </div>
 
           <!-- Elegant Corner Rivets (Medieval gold board aesthetic) -->
