@@ -44,7 +44,7 @@ body {
 .panel-eyebrow {
   margin: 0 0 8px;
   color: var(--accent-2);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.16em;
   font-size: 12px;
 }
@@ -218,7 +218,7 @@ kbd {
   max-height: 82vh !important; /* Fit elegantly within viewport height */
   display: flex !important;
   flex-direction: column !important;
-  padding: 75px 85px 65px !important; /* Perfect spacious padding, leaving 65px bottom margin for logos */
+  padding: 97px 85px 65px !important; /* Perfect spacious padding, leaving 65px bottom margin for logos */
   overflow-y: auto !important; /* Scroll entire sheet if needed to prevent clipping */
   scrollbar-width: none; /* Hide scrollbars for absolute visual purity */
   color: #e2e8f0;
@@ -280,7 +280,7 @@ kbd {
 .papyrus-eyebrow {
   margin: 0 0 6px;
   color: #00ffcc; /* Bright luminous teal */
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.25em;
   font-size: 11px;
   text-align: center;
@@ -330,7 +330,7 @@ kbd {
   margin: 0 0 6px;
   font-size: 14px;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #ffd700; /* Beautiful royal gold heading */
   font-weight: 900;
   border-bottom: 1px solid rgba(255, 215, 0, 0.3);
@@ -419,7 +419,7 @@ kbd {
   font-weight: bold;
   letter-spacing: 0.18em;
   color: var(--accent-2);
-  text-transform: uppercase;
+  text-transform: none;
   margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
@@ -985,7 +985,7 @@ kbd {
 .card-eyebrow {
   font-size: 11px;
   color: var(--accent);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.2em;
   font-weight: 800;
   margin-bottom: 10px;
@@ -1142,7 +1142,7 @@ kbd {
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 15px;
   font-weight: 900;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.08em;
   padding: 8px 30px;
   margin-top: -38px; /* Extrude beautifully up over the thick gold frame boundary */
@@ -1207,7 +1207,7 @@ kbd {
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 11.5px;
   font-weight: 900;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.1em;
   padding: 10px 14px;
   border-radius: 20px; /* Breathtaking round buttons */
@@ -1420,7 +1420,7 @@ kbd {
   font-size: 9px;
   color: #c9bdae;
   font-weight: bold;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.12em;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
 }
@@ -1444,7 +1444,7 @@ kbd {
   font-family: Georgia, serif !important; /* Premium classic serif */
   font-size: 13.5px !important; /* Elegant refined scaling */
   font-weight: 800 !important;
-  text-transform: uppercase !important;
+  text-transform: none !important;
   letter-spacing: 0.22em !important; /* Wide noble spacing */
   padding: 16px 20px !important; /* Tall, premium padding to feel heavy and luxurious */
   border-radius: 8px !important; /* Slightly rounded plaque corners */
@@ -1579,7 +1579,7 @@ kbd {
   font-family: Georgia, serif;
   font-size: 11px;
   font-weight: 900;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.08em;
   padding: 0 28px 0 12px;
   cursor: pointer;
@@ -1617,5 +1617,599 @@ kbd {
   font-weight: bold;
 }
 
+/* ==========================================
+   CANVAS VIEWPORT ASPECT RATIO CONTAINER
+   ========================================== */
 
+.canvas-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  container-type: size;
+}
+
+.canvas-container canvas#game {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ==========================================
+   PREMIUM MOBILE TOUCH CONTROLS STYLE
+   ========================================== */
+
+.mobile-touch-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 16%; /* Fits perfectly within the 17.7% height bottom stone platform tiles */
+  display: none; /* Controlled dynamically in JS */
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Virtual Analog Joystick Styles */
+.joystick-container {
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  transform: translateY(-8px); /* Raised up slightly to prevent being cut off at screen bottom */
+}
+
+.joystick-base {
+  width: clamp(50px, 8.5cqh, 60px);
+  height: clamp(50px, 8.5cqh, 60px);
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(9, 7, 10, 0.6); /* Darker backdrop to stand out on stone platform */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 0 8px rgba(255, 255, 255, 0.05);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none; /* Prevents screen scrolling while dragging */
+}
+
+.joystick-knob {
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1.5px 3px rgba(255, 255, 255, 0.6);
+  position: absolute;
+  pointer-events: none; /* Lets touch pass to base */
+}
+
+.action-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  pointer-events: auto;
+  margin-right: 48px; /* Leaves clear space for vertically-centered fullscreen button */
+  transform: translateY(-4px); /* Raised up a click to keep beautifully nestled inside tiles */
+}
+
+/* Compact Circular Touch Button Core Style */
+.touch-btn {
+  border-radius: 50%;
+  border: 1.5px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), inset 0 1.5px 3px rgba(255, 255, 255, 0.15), inset 0 -1.5px 3px rgba(0, 0, 0, 0.4);
+}
+
+.touch-btn svg {
+  width: clamp(12px, 2.2cqh, 16px);
+  height: clamp(12px, 2.2cqh, 16px);
+}
+
+.touch-btn:active {
+  transform: scale(0.9);
+}
+
+.touch-btn-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: clamp(5px, 0.9cqh, 7px);
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  margin-top: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Contextual Interaction Button (E) - Neon Emerald/Teal (Slides dynamically) */
+.touch-btn.btn-interact {
+  width: 0;
+  height: clamp(34px, 6cqh, 44px);
+  opacity: 0;
+  margin-right: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-color: #00ffcc;
+  background: radial-gradient(circle at 35% 35%, rgba(0, 255, 204, 0.15) 0%, rgba(0, 204, 163, 0.35) 70%, rgba(0, 120, 96, 0.75) 100%);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.1), inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+  transition: width 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.2s ease, margin-right 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.15s ease;
+  border: 1.5px solid;
+}
+
+.touch-btn.btn-interact.active {
+  width: clamp(34px, 6cqh, 44px);
+  opacity: 1;
+  margin-right: 8px;
+  pointer-events: auto;
+}
+
+.touch-btn.btn-interact:active {
+  background: radial-gradient(circle at 35% 35%, rgba(0, 255, 204, 0.4) 0%, rgba(0, 220, 176, 0.5) 70%, rgba(0, 150, 120, 0.85) 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+}
+
+/* Attack Button (F) - Neon Gold/Orange (Sleek Compact Size) */
+.touch-btn.btn-attack {
+  width: clamp(34px, 6cqh, 44px);
+  height: clamp(34px, 6cqh, 44px);
+  border-color: #f39c12;
+  background: radial-gradient(circle at 35% 35%, rgba(243, 156, 18, 0.15) 0%, rgba(185, 119, 14, 0.35) 70%, rgba(120, 77, 9, 0.75) 100%);
+  box-shadow: 0 0 10px rgba(243, 156, 18, 0.25), inset 0 2px 4px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.5);
+}
+
+.touch-btn.btn-attack:active {
+  background: radial-gradient(circle at 35% 35%, rgba(243, 156, 18, 0.4) 0%, rgba(210, 130, 15, 0.5) 70%, rgba(150, 90, 10, 0.85) 100%);
+  box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+}
+
+/* Jump Button (Space) - Neon Pink/Magenta - Positioned Far Right & Slightly Larger */
+.touch-btn.btn-jump {
+  width: clamp(40px, 7cqh, 50px);
+  height: clamp(40px, 7cqh, 50px);
+  border-color: #ff3399;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 51, 153, 0.18) 0%, rgba(204, 40, 122, 0.38) 70%, rgba(128, 25, 76, 0.78) 100%);
+  box-shadow: 0 0 10px rgba(255, 51, 153, 0.3), inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.5);
+}
+
+.touch-btn.btn-jump:active {
+  background: radial-gradient(circle at 35% 35%, rgba(255, 51, 153, 0.4) 0%, rgba(220, 45, 130, 0.5) 70%, rgba(160, 30, 95, 0.85) 100%);
+  box-shadow: 0 0 24px rgba(255, 51, 153, 0.55);
+}
+
+/* Elegant low-profile Fullscreen Toggle button, absolute-centered vertically in HUD strip */
+.mobile-fullscreen-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(30px, 5cqh, 36px);
+  height: clamp(30px, 5cqh, 36px);
+  border-radius: 8px;
+  background: rgba(13, 11, 16, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #ecd685;
+  color: #ecd685;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 10005;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65), inset 0 1.5px 3px rgba(255, 255, 255, 0.08);
+  transition: all 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-fullscreen-btn svg {
+  width: clamp(12px, 2.2cqh, 16px);
+  height: clamp(12px, 2.2cqh, 16px);
+}
+
+.mobile-fullscreen-btn:active {
+  transform: translateY(-50%) scale(0.88);
+  background: rgba(236, 214, 133, 0.22);
+  box-shadow: 0 0 12px rgba(236, 214, 133, 0.45);
+}
+
+/* Responsive visibility checks */
+@media (pointer: coarse) {
+  /* Show only on touch devices if toggled by JS classes */
+  .mobile-touch-controls-active .mobile-touch-controls {
+    display: flex;
+  }
+}
+
+/* Hide bulky "How to Play" overlay content on mobile to keep start screen pristine */
+.mobile-touch-device .play-overlay .overlay-header,
+.mobile-touch-device .play-overlay .controls-card {
+  display: none !important;
+}
+
+.mobile-touch-device .prompt {
+  display: none !important;
+}
+
+.mobile-touch-device .play-overlay {
+  padding: 20px !important;
+}
+
+/* CSS Fake Fullscreen Layout Fallback (100% bulletproof compatibility for iPhones/Safari) */
+#gameContainer.fake-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #000000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#gameContainer.fake-fullscreen .canvas-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 177.78vh !important; /* 16/9 * 100vh */
+  max-height: 56.25vw !important; /* 9/16 * 100vw */
+  aspect-ratio: 16 / 9 !important;
+  margin: auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#gameContainer.fake-fullscreen canvas#game {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+}
+
+#gameContainer.fake-fullscreen .mobile-fullscreen-btn {
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Landscape Mode Touch Buttons Upscaling (Only triggers when screen is rotated horizontally) */
+@media (orientation: landscape) {
+  .joystick-base {
+    width: clamp(60px, 10.5cqh, 74px);
+    height: clamp(60px, 10.5cqh, 74px);
+  }
+  .touch-btn.btn-interact {
+    height: clamp(40px, 7.5cqh, 52px);
+  }
+  .touch-btn.btn-interact.active {
+    width: clamp(40px, 7.5cqh, 52px);
+  }
+  .touch-btn.btn-attack {
+    width: clamp(40px, 7.5cqh, 52px);
+    height: clamp(40px, 7.5cqh, 52px);
+  }
+  .touch-btn.btn-jump {
+    width: clamp(48px, 8.5cqh, 60px);
+    height: clamp(48px, 8.5cqh, 60px);
+  }
+  .mobile-fullscreen-btn {
+    width: clamp(34px, 6cqh, 42px);
+    height: clamp(34px, 6cqh, 42px);
+  }
+}
+
+/* ==========================================
+   INTERACTIVE VICTORY SCREEN OVERLAY
+   ========================================== */
+.victory-overlay {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12%; /* Pushed further down to ensure buttons clear canvas text and stats box! */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px; /* Reduced gap for a tighter, sleeker horizontal layout */
+  pointer-events: none;
+  z-index: 10005; /* Above canvas and overlay controls */
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.victory-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 15px);
+  display: none !important;
+}
+
+.victory-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 130px; /* Even smaller and sleeker desktop width */
+  height: 30px; /* Compact desktop height */
+  border-radius: 5px;
+  font-family: "Cinzel", "Georgia", monospace, serif;
+  font-weight: bold;
+  font-size: 8.5px; /* Tiny elegant font size */
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  text-transform: none;
+}
+
+.victory-btn-icon {
+  width: 12px; /* Tiny icon */
+  height: 12px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+/* Restart Button - Silver Platinum Glow */
+.victory-btn.btn-restart {
+  background: rgba(13, 11, 16, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6), 0 0 4px rgba(255, 255, 255, 0.15);
+}
+
+.victory-btn.btn-restart:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #ffffff;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2), 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.victory-btn.btn-restart:hover .victory-btn-icon {
+  transform: rotate(-180deg);
+}
+
+/* Twitter/X Button - Luminous Emerald Glow */
+.victory-btn.btn-twitter {
+  background: rgba(10, 10, 12, 0.88);
+  border: 1.5px solid rgba(0, 255, 204, 0.65);
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 255, 204, 0.15);
+}
+
+.victory-btn.btn-twitter:hover {
+  background: rgba(0, 255, 204, 0.14);
+  border-color: #00ffcc;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 255, 204, 0.25), 0 0 10px rgba(0, 255, 204, 0.5);
+  text-shadow: 0 0 3px rgba(0, 255, 204, 0.3);
+}
+
+.victory-btn.btn-twitter:hover .victory-btn-icon {
+  transform: scale(1.15);
+}
+
+/* Responsive Victory Buttons Scaling for Mobile/Tablets */
+@media (max-width: 768px) {
+  .victory-overlay {
+    gap: 12px;
+    bottom: 12%; /* Pull slightly lower on smaller horizontal viewports to prevent collisions */
+  }
+  .victory-btn {
+    width: 115px; /* Even more compact tablet size */
+    height: 26px; /* Even more compact tablet size */
+    font-size: 7.5px;
+    letter-spacing: 0.8px;
+    border-width: 1.2px;
+    gap: 5px;
+  }
+  .victory-btn-icon {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* Vertical Stacking on narrow/portrait screens to prevent collisions */
+@media (max-width: 480px), (max-aspect-ratio: 1/1) {
+  .victory-overlay {
+    flex-direction: column;
+    gap: 6px; /* Tighter gap */
+    bottom: 6%; /* Pull significantly down when stacked to clear all text and stats! */
+  }
+  .victory-btn {
+    width: 100px; /* Micro portrait width to fit gracefully on narrow mobile displays */
+    height: 22px; /* Micro portrait height to stay well clear of canvas text */
+    font-size: 6.8px;
+    letter-spacing: 0.5px;
+    gap: 4px;
+    border-width: 1px;
+  }
+  .victory-btn-icon {
+    width: 9px;
+    height: 9px;
+  }
+}
+
+/* ==========================================
+   RESPONSIVE LORE TABLET REFINEMENTS (PAPYRUS)
+   ========================================== */
+
+/* Dock close button inside and reduce paddings on tablets */
+@media (max-width: 1024px) {
+  .papyrus-sheet {
+    padding: 94px 40px 40px !important; /* Pushed text down by 22px so it doesn't overlap the top decorative shape! */
+    max-height: 85vh !important;
+  }
+  .papyrus-close {
+    top: 15px !important;
+    right: 15px !important; /* Always dock inside to avoid clipping on screen edges */
+    background: rgba(10, 15, 26, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+}
+
+/* Compact padding and scaling for mobile screens */
+@media (max-width: 600px) {
+  .papyrus-sheet {
+    padding: 82px 24px 24px !important; /* Pushed text down by 22px on mobile to clear the top scroll graphic! */
+    max-height: 90vh !important;
+  }
+  .papyrus-close {
+    top: 10px !important;
+    right: 10px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
+  }
+  .papyrus-sheet h2 {
+    font-size: 20px !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 6px !important;
+  }
+  .papyrus-eyebrow {
+    font-size: 9.5px !important;
+    letter-spacing: 0.15em !important;
+    margin-bottom: 4px !important;
+  }
+  .papyrus-intro {
+    font-size: 11px !important;
+    margin-bottom: 12px !important;
+    line-height: 1.3 !important;
+  }
+  .papyrus-body {
+    gap: 8px !important;
+  }
+  .papyrus-block h3 {
+    font-size: 12.5px !important;
+    margin-bottom: 4px !important;
+  }
+  .papyrus-block p,
+  .papyrus-block ul {
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+  }
+  .papyrus-block p::first-letter {
+    font-size: 2.0em !important;
+    margin-top: 1px !important;
+    margin-right: 6px !important;
+  }
+}
+
+/* Elegant, thin, custom scrollbar inside the lore sheets on mobiles/tablets to invite scrolling */
+.papyrus-sheet {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 255, 204, 0.25) transparent !important;
+}
+
+.papyrus-sheet::-webkit-scrollbar {
+  display: block !important;
+  width: 5px !important;
+  height: 5px !important;
+}
+
+.papyrus-sheet::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.papyrus-sheet::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 204, 0.2) !important;
+  border-radius: 10px !important;
+  border: none !important;
+  transition: background 0.3s ease !important;
+}
+
+.papyrus-sheet::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 204, 0.45) !important;
+}
+
+/* ==========================================
+   RESPONSIVE HUD AUDIO CONTROLS (CONTAINER QUERIES)
+   ========================================== */
+@container (max-width: 1024px) {
+  .mute-btn {
+    width: 35px !important;
+    height: 35px !important;
+    border-width: 1.5px !important;
+  }
+  .mute-icon {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .music-select {
+    width: 114px !important;
+    height: 35px !important;
+    left: calc(18.2% + 45px) !important; /* Positioned perfectly to the right of the speaker icon! */
+    font-size: 9px !important;
+    padding: 0 20px 0 8px !important;
+    background-size: 14px !important;
+    background-position: right 6px center !important;
+    border-width: 2px !important;
+  }
+}
+
+@container (max-width: 768px) {
+  .mute-btn {
+    width: 28px !important;
+    height: 28px !important;
+    border-width: 1.2px !important;
+  }
+  .mute-icon {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  .music-select {
+    width: 90px !important;
+    height: 28px !important;
+    left: calc(18.2% + 36px) !important; /* Positioned perfectly to the right of the speaker icon! */
+    font-size: 8px !important;
+    padding: 0 16px 0 6px !important;
+    background-size: 11px !important;
+    background-position: right 4px center !important;
+    border-width: 1.5px !important;
+  }
+}
+
+@container (max-width: 480px) {
+  .mute-btn {
+    width: 20px !important;
+    height: 20px !important;
+    border-width: 1px !important;
+  }
+  .mute-icon {
+    width: 9px !important;
+    height: 9px !important;
+  }
+  .music-select {
+    width: 66px !important;
+    height: 20px !important;
+    left: calc(18.2% + 26px) !important; /* Positioned perfectly to the right of the speaker icon! */
+    font-size: 6.5px !important;
+    padding: 0 10px 0 4px !important;
+    background-size: 8px !important;
+    background-position: right 2px center !important;
+    border-width: 1px !important;
+  }
+}
 

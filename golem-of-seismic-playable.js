@@ -1575,6 +1575,7 @@ papyrusClose.addEventListener("click", () => {
 
 const TILE_SIZE = 64;
 let currentStage = 0;
+let stageTitleTimer = 0;
 let inInterior = false;
 let papyrusOpen = false;
 let time = 0;
@@ -1879,6 +1880,11 @@ function initStage() {
     logoDeskInitialized = true;
   }
   if (currentStage === 11) {
+    stageTitleTimer = 3.0; // 3 seconds in final chamber
+  } else {
+    stageTitleTimer = 1.5; // 1.5 seconds in standard rooms/stages
+  }
+  if (currentStage === 11) {
     // Final Room (Seismic) has no outdoor stage, directly load interior palace
     inInterior = true;
     map = generateInteriorMap(11);
@@ -1967,7 +1973,7 @@ function openPapyrus() {
   papyrusBody.style.paddingBottom = "50px"; // Add generous bottom padding to allow full unclipped scrolling!
   r.archiveSections.forEach(sec => {
     const s = document.createElement("section"); s.className = "papyrus-block";
-    s.innerHTML = `<h3>${sec.title}</h3>`;
+    s.innerHTML = `<h3>${sec.title.toLocaleUpperCase('en-US')}</h3>`;
     if(sec.body) s.innerHTML += `<p>${sec.body}</p>`;
     
     // Add the beautiful brand logo of the project under the Core Mechanics section!
@@ -7668,6 +7674,7 @@ function draw() {
   // Interaction Prompts
   const tx = Math.floor((player.x + player.w/2) / TILE_SIZE); const ty = Math.floor((player.y + player.h/2) / TILE_SIZE);
   let nearInteractable = false;
+  let interactLabel = "";
   
   if (inInterior && currentStage === 11) {
     let nearChest = false;
@@ -7680,9 +7687,11 @@ function draw() {
       if (!chestOpened) {
         promptBox.textContent = "Press E to open the chest.";
         nearInteractable = true;
+        interactLabel = "OPEN";
       } else if (chestGemY >= 60 && !golemEmpowered) {
         promptBox.textContent = "Press E to absorb the ultimate core power.";
         nearInteractable = true;
+        interactLabel = "ABSORB";
       } else if (golemEmpowered) {
         promptBox.textContent = "All power absorbed! Archive complete.";
       }
@@ -7694,20 +7703,111 @@ function draw() {
       }
     }
   }
-  else if (!inInterior && currentStage < 10 && map[ty] && map[ty][tx] === 2) { promptBox.textContent = "Press E to enter the Sanctum."; nearInteractable = true; } 
-  else if (inInterior && map[ty] && map[ty][tx] === 7) { promptBox.textContent = "Press E to read the Monument."; nearInteractable = true; } 
+  else if (!inInterior && currentStage < 10 && map[ty] && map[ty][tx] === 2) { 
+    promptBox.textContent = "Press E to enter the Sanctum."; 
+    nearInteractable = true; 
+    interactLabel = "ENTER";
+  } 
+  else if (inInterior && map[ty] && map[ty][tx] === 7) { 
+    promptBox.textContent = "Press E to read the Monument."; 
+    nearInteractable = true; 
+    interactLabel = "READ";
+  } 
   else if (inInterior && map[ty] && map[ty][tx] === 9) {
     if (stagesMonumentRead[currentStage]) {
-      promptBox.textContent = "Press E to proceed to the next stage."; nearInteractable = true;
+      promptBox.textContent = "Press E to proceed to the next stage."; 
+      nearInteractable = true;
+      interactLabel = "ENTER";
     } else {
       promptBox.textContent = "🔒 Read the Monument before you may pass.";
     }
   } 
   else { promptBox.textContent = ""; }
 
-  if (nearInteractable) {
+  // Dynamic mobile contextual interaction button sync
+  const mobileInteractBtn = document.getElementById("touchBtnInteract");
+  if (mobileInteractBtn) {
+    if (nearInteractable && interactLabel) {
+      const labelSpan = mobileInteractBtn.querySelector(".touch-btn-label");
+      if (labelSpan) {
+        labelSpan.textContent = interactLabel;
+      }
+      mobileInteractBtn.classList.add("active");
+    } else {
+      mobileInteractBtn.classList.remove("active");
+    }
+  }
+
+  const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (nearInteractable && !isTouchDevice) {
     ctx.fillStyle = "#fff"; ctx.font = "20px monospace"; ctx.textAlign = "center";
     ctx.fillText("Press E", player.x - camera.x + player.w/2, player.y - camera.y - 20);
+  }
+
+  // Render Elegant Floating Stage/Room Entry Title Banner
+  if (stageTitleTimer > 0) {
+    stageTitleTimer -= 0.016;
+    ctx.save();
+    
+    // Calculate opacity with a nice fade-in/fade-out
+    let opacity = 1;
+    if (stageTitleTimer < 0.5) {
+      opacity = stageTitleTimer / 0.5; // Fade out in the last 0.5s
+    } else if (stageTitleTimer > 2.5 && currentStage === 11) {
+      opacity = (3.0 - stageTitleTimer) / 0.5; // Fade in during first 0.5s (Stage 11)
+    } else if (stageTitleTimer > 1.0 && currentStage !== 11) {
+      opacity = (1.5 - stageTitleTimer) / 0.5; // Fade in during first 0.5s (normal rooms)
+    }
+    opacity = Math.max(0, Math.min(1, opacity));
+    
+    ctx.textAlign = "center";
+    
+    // Draw a soft background glow banner centered on screen
+    let bannerGrad = ctx.createLinearGradient(canvas.width/2 - 200, 0, canvas.width/2 + 200, 0);
+    bannerGrad.addColorStop(0, "rgba(0,0,0,0)");
+    bannerGrad.addColorStop(0.3, `rgba(14,10,16,${0.65 * opacity})`);
+    bannerGrad.addColorStop(0.7, `rgba(14,10,16,${0.65 * opacity})`);
+    bannerGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = bannerGrad;
+    ctx.fillRect(canvas.width/2 - 250, 110, 500, 70);
+    
+    // Elegant Gold Border lines above and below
+    ctx.strokeStyle = `rgba(236,214,133,${0.3 * opacity})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2 - 180, 110);
+    ctx.lineTo(canvas.width/2 + 180, 110);
+    ctx.moveTo(canvas.width/2 - 180, 180);
+    ctx.lineTo(canvas.width/2 + 180, 180);
+    ctx.stroke();
+    
+    // Main Title
+    ctx.fillStyle = `rgba(236,214,133,${opacity})`;
+    ctx.font = "bold 22px Georgia, serif";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 4;
+    
+    let titleStr = "";
+    let subtitleStr = "";
+    if (currentStage === 11) {
+      titleStr = "THE SEISMIC CHAMBER";
+      subtitleStr = "Ancient Palace Archives";
+    } else if (inInterior) {
+      titleStr = (ROOMS[currentStage] ? ROOMS[currentStage].name.toUpperCase() : "SANCTUM") + " MONUMENT";
+      subtitleStr = "Sacred Runic Sanctum";
+    } else {
+      titleStr = "STAGE " + (currentStage + 1);
+      subtitleStr = ROOMS[currentStage] ? ROOMS[currentStage].name : "The Cavern";
+    }
+    
+    ctx.fillText(titleStr, canvas.width / 2, 142);
+    
+    // Subtitle
+    ctx.fillStyle = `rgba(255,255,255,${0.75 * opacity})`;
+    ctx.font = "italic 12px Georgia, serif";
+    ctx.fillText(subtitleStr, canvas.width / 2, 166);
+    
+    ctx.restore();
   }
 
   // Draw Premium Game Over Victory Overlay
@@ -7847,84 +7947,8 @@ function draw() {
     ctx.font = "bold 20px Georgia";
     ctx.fillText(`${logosCollected} / 11 CORES`, 640, 428);
 
-    // 5. Restart Button (Translucent dark charcoal with a premium glowing white/platinum outline)
-    ctx.save();
-    const isRestartHovered = (hoveredButton === "restart");
-    ctx.fillStyle = isRestartHovered ? "rgba(255, 255, 255, 0.12)" : "rgba(13, 11, 16, 0.85)";
-    ctx.strokeStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.65)";
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.25)";
-    ctx.shadowBlur = isRestartHovered ? 15 : 6;
-    
-    // Draw button box
-    ctx.fillRect(380, 500, 230, 52);
-    ctx.strokeRect(380, 500, 230, 52);
-    
-    // Reset shadow blur for drawing inner elements
-    ctx.shadowBlur = 0;
-    
-    // Draw a sleek circular reset/arrow loop icon on the left of the button!
-    ctx.strokeStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(414, 526, 7, -Math.PI * 0.5, Math.PI * 1.2);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(414, 515);
-    ctx.lineTo(414, 521);
-    ctx.lineTo(420, 519);
-    ctx.closePath();
-    ctx.fillStyle = isRestartHovered ? "#ffffff" : "rgba(255, 255, 255, 0.8)";
-    ctx.fill();
-    
-    // Draw button text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 13px monospace";
-    ctx.fillText("RESTART ARCHIVE", 508, 532);
-    ctx.restore();
-
-    // 6. Twitter / X Share Button (Chic neon cyan/teal glassmorphism)
-    ctx.save();
-    const isTwitterHovered = (hoveredButton === "twitter");
-    ctx.fillStyle = isTwitterHovered ? "rgba(0, 255, 204, 0.12)" : "rgba(10, 10, 12, 0.85)";
-    ctx.strokeStyle = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.65)";
-    ctx.lineWidth = 2.5;
-    ctx.shadowColor = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.25)";
-    ctx.shadowBlur = isTwitterHovered ? 15 : 6;
-    
-    // Draw button box
-    ctx.fillRect(670, 500, 230, 52);
-    ctx.strokeRect(670, 500, 230, 52);
-    
-    ctx.shadowBlur = 0;
-    
-    // Draw official glowing X logo (hollow thick diagonal + crossing solid line)
-    ctx.strokeStyle = isTwitterHovered ? "#00ffcc" : "rgba(0, 255, 204, 0.9)";
-    ctx.lineWidth = 1.6;
-    
-    // 1. Hollow thick diagonal bar (top-left to bottom-right)
-    ctx.beginPath();
-    ctx.moveTo(696, 517);
-    ctx.lineTo(700, 517);
-    ctx.lineTo(712, 533);
-    ctx.lineTo(708, 533);
-    ctx.closePath();
-    ctx.stroke();
-    
-    // 2. Crossing solid diagonal line (top-right to bottom-left)
-    ctx.beginPath();
-    ctx.moveTo(712, 517);
-    ctx.lineTo(696, 533);
-    ctx.stroke();
-    
-    // Draw button text
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 13px monospace";
-    ctx.fillText("SHARE ON TWITTER", 808, 532);
-    ctx.restore();
-
-    ctx.restore();
+    // Victory screen buttons are now rendered beautifully via responsive HTML overlay (#victoryOverlay) instead of microscopic canvas pixels!
+    // This allows full viewport responsiveness, mobile stacking, and perfect native touch response.
   } else {
     // Make sure the mute button is visible during normal gameplay
     const muteBtn = document.getElementById("muteBtn");
@@ -7945,67 +7969,28 @@ function loop() {
     }
     draw();
     drawLogoDesk(); // Keep preview logos animated live!
+    if (typeof updateMobileControlsVisibility === "function") {
+      updateMobileControlsVisibility();
+    }
   } catch (err) {
     console.error("Game loop error caught safely:", err);
   }
   requestAnimationFrame(loop);
 }
 
-// Canvas Click Event Listener for Reset/Restart Button
+// Canvas Mousemove Event Listener (No-op for victory buttons since they are now true HTML)
 let hoveredButton = null;
 canvas.addEventListener("mousemove", (e) => {
-  if (!gameStarted || !golemEmpowered) {
-    hoveredButton = null;
-    canvas.style.cursor = "default";
-    return;
-  }
-  const rect = canvas.getBoundingClientRect();
-  const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
-  const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
-  
-  if (mx >= 380 && mx <= 610 && my >= 500 && my <= 552) {
-    hoveredButton = "restart";
-    canvas.style.cursor = "pointer";
-  } else if (mx >= 670 && mx <= 900 && my >= 500 && my <= 552) {
-    hoveredButton = "twitter";
-    canvas.style.cursor = "pointer";
-  } else {
-    hoveredButton = null;
-    canvas.style.cursor = "default";
-  }
+  if (!gameStarted) return;
+  canvas.style.cursor = "default";
 });
 
+// Canvas Click Event Listener (No-op for victory buttons since they are now true HTML)
 canvas.addEventListener("click", (e) => {
   if (typeof wakeUpAudio === "function") wakeUpAudio();
   window.focus();
   canvas.focus();
   if (!gameStarted) return;
-  if (golemEmpowered) {
-    const rect = canvas.getBoundingClientRect();
-    const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
-    
-    // Check if clicked the Restart Button (x = 380 to 610, y = 500 to 552)
-    if (clickX >= 380 && clickX <= 610 && clickY >= 500 && clickY <= 552) {
-      currentStage = 0;
-      inInterior = false;
-      chestOpened = false;
-      chestGemY = 0;
-      golemEmpowered = false;
-      logosCollected = 0;
-      stagesMonumentRead = {};
-      unlockedStages = [0]; // Reset to only Stage 1 unlocked on restart!
-      ROOMS.forEach(r => r.logoCollected = false);
-      initStage();
-    }
-    
-    // Check if clicked the Twitter Button (x = 670 to 900, y = 500 to 552)
-    if (clickX >= 670 && clickX <= 900 && clickY >= 500 && clickY <= 552) {
-      const tweetText = `I have successfully awakened the @SeismicSys Ecosystem Projects and recovered all 11 ancient cores! \n\nThe Seismic Shield is active, securing the Brookwell, Blend, Port Markets and more archives.\n\nBegin your Seismic journey now.: golem-of-seismicc.vercel.app \n\nBuilt by @slatro_eth`;
-      const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-      window.open(twitterShareUrl, "_blank");
-    }
-  }
 });
 
 function initPlayBtn() {
@@ -8070,6 +8055,50 @@ function initPlayBtn() {
   // Wire up the vertical menu buttons and modal overlays!
   if (typeof initMenuButtons === "function") {
     initMenuButtons();
+  }
+}
+
+function initVictoryButtons() {
+  const restartBtn = document.getElementById("victoryRestartBtn");
+  const twitterBtn = document.getElementById("victoryTwitterBtn");
+
+  if (restartBtn) {
+    restartBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      
+      currentStage = 0;
+      inInterior = false;
+      chestOpened = false;
+      chestGemY = 0;
+      golemEmpowered = false;
+      logosCollected = 0;
+      stagesMonumentRead = {};
+      unlockedStages = [0]; // Reset to only Stage 1 unlocked on restart!
+      ROOMS.forEach(r => r.logoCollected = false);
+      initStage();
+      
+      if (typeof updateMobileControlsVisibility === "function") {
+        updateMobileControlsVisibility();
+      }
+      
+      // Focus canvas
+      setTimeout(() => {
+        window.focus();
+        canvas.focus();
+      }, 50);
+    });
+  }
+
+  if (twitterBtn) {
+    twitterBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+
+      const tweetText = `I have successfully awakened the @SeismicSys Ecosystem Projects and recovered all 11 ancient cores! \n\nThe Seismic Shield is active, securing the Brookwell, Blend, Port Markets and more archives.\n\nBegin your Seismic journey now: golem-of-seismicc.vercel.app \n\nBuilt by @slatro_eth`;
+      const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+      window.open(twitterShareUrl, "_blank");
+    });
   }
 }
 
@@ -8255,10 +8284,319 @@ function initMenuButtons() {
   }
 }
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initPlayBtn);
+  document.addEventListener("DOMContentLoaded", () => {
+    initPlayBtn();
+    initVictoryButtons();
+    if (typeof initMobileControls === "function") initMobileControls();
+  });
 } else {
   initPlayBtn();
+  initVictoryButtons();
+  if (typeof initMobileControls === "function") initMobileControls();
 }
 
 initStage();
 requestAnimationFrame(loop);
+
+// ==========================================
+// MOBILE TOUCH CONTROLS INTERACTIVE LOGIC
+// ==========================================
+
+function initMobileControls() {
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (isTouch) {
+    document.body.classList.add("mobile-touch-device");
+    document.body.classList.add("mobile-touch-controls-active");
+  }
+
+  // Helper to bind events smoothly to virtual keys Set
+  function bindTouchKey(btnId, keyChar) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+
+    const startHandler = (e) => {
+      e.preventDefault();
+      keys.add(keyChar);
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      
+      // Visual touch feedback active state
+      btn.style.transform = "scale(0.88)";
+    };
+
+    const endHandler = (e) => {
+      e.preventDefault();
+      keys.delete(keyChar);
+      
+      btn.style.transform = "";
+    };
+
+    btn.addEventListener("touchstart", startHandler, { passive: false });
+    btn.addEventListener("touchend", endHandler, { passive: false });
+    btn.addEventListener("touchcancel", endHandler, { passive: false });
+
+    // Also support fallback mouse interactions for easy emulation testing
+    btn.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      keys.add(keyChar);
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      btn.style.transform = "scale(0.88)";
+    });
+    const handleMouseUp = () => {
+      keys.delete(keyChar);
+      btn.style.transform = "";
+    };
+    btn.addEventListener("mouseup", handleMouseUp);
+    btn.addEventListener("mouseleave", handleMouseUp);
+  }
+
+  // Bind Attack F
+  bindTouchKey("touchBtnAttack", "f");
+  // Bind Jump Space
+  bindTouchKey("touchBtnJump", " ");
+
+  // Bind Contextual Interact Button to tryInteract()
+  const btnInteract = document.getElementById("touchBtnInteract");
+  if (btnInteract) {
+    const handleInteractTap = (e) => {
+      e.preventDefault();
+      tryInteract();
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+      
+      // Visual touch feedback active state
+      btnInteract.style.transform = "scale(0.88)";
+      setTimeout(() => {
+        btnInteract.style.transform = "";
+      }, 150);
+    };
+    btnInteract.addEventListener("touchstart", handleInteractTap, { passive: false });
+    btnInteract.addEventListener("mousedown", handleInteractTap);
+  }
+
+  // Virtual Joystick Setup
+  const joystickBase = document.getElementById("joystickBase");
+  const joystickKnob = document.getElementById("joystickKnob");
+
+  if (joystickBase && joystickKnob) {
+    let joystickActive = false;
+    let joystickTouchId = null;
+
+    const updateJoystick = (clientX, clientY) => {
+      const baseRect = joystickBase.getBoundingClientRect();
+      const centerX = baseRect.left + baseRect.width / 2;
+      const centerY = baseRect.top + baseRect.height / 2;
+
+      let dx = clientX - centerX;
+      let dy = clientY - centerY;
+
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxRadius = baseRect.width / 2;
+      const deadzone = maxRadius * 0.18; // Responsive 18% deadzone based on base diameter
+
+      if (distance > maxRadius) {
+        dx = (dx / distance) * maxRadius;
+        dy = (dy / distance) * maxRadius;
+      }
+
+      // Visual translation of the knob
+      joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+
+      // Map horizontal displacement to 'a' and 'd' keys
+      if (dx < -deadzone) {
+        keys.add("a");
+        keys.delete("d");
+      } else if (dx > deadzone) {
+        keys.add("d");
+        keys.delete("a");
+      } else {
+        keys.delete("a");
+        keys.delete("d");
+      }
+    };
+
+    const handleStart = (e) => {
+      e.preventDefault();
+      if (joystickActive) return;
+
+      if (e.type === "touchstart") {
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+        updateJoystick(touch.clientX, touch.clientY);
+      } else {
+        joystickActive = true;
+        updateJoystick(e.clientX, e.clientY);
+      }
+      
+      if (typeof wakeUpAudio === "function") wakeUpAudio();
+    };
+
+    const handleMove = (e) => {
+      if (!joystickActive) return;
+
+      if (e.type === "touchmove") {
+        let trackedTouch = null;
+        for (let i = 0; i < e.touches.length; i++) {
+          if (e.touches[i].identifier === joystickTouchId) {
+            trackedTouch = e.touches[i];
+            break;
+          }
+        }
+        if (!trackedTouch) return;
+        if (e.cancelable) e.preventDefault();
+        updateJoystick(trackedTouch.clientX, trackedTouch.clientY);
+      } else {
+        updateJoystick(e.clientX, e.clientY);
+      }
+    };
+
+    const handleEnd = (e) => {
+      if (!joystickActive) return;
+
+      if (e.type === "touchend" || e.type === "touchcancel") {
+        let trackedTouchEnded = false;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === joystickTouchId) {
+            trackedTouchEnded = true;
+            break;
+          }
+        }
+        if (!trackedTouchEnded) return;
+        joystickTouchId = null;
+        joystickActive = false;
+      } else {
+        joystickActive = false;
+      }
+
+      // Reset knob visual and directional keys
+      joystickKnob.style.transform = "translate(0px, 0px)";
+      keys.delete("a");
+      keys.delete("d");
+    };
+
+    joystickBase.addEventListener("touchstart", handleStart, { passive: false });
+    joystickBase.addEventListener("mousedown", handleStart);
+
+    window.addEventListener("touchmove", handleMove, { passive: false });
+    window.addEventListener("mousemove", handleMove);
+    
+    window.addEventListener("touchend", handleEnd);
+    window.addEventListener("touchcancel", handleEnd);
+    window.addEventListener("mouseup", handleEnd);
+  }
+
+  // Bind Fullscreen & Landscape Lock Toggle button
+  const fsBtn = document.getElementById("mobileFullscreenBtn");
+  if (fsBtn) {
+    fsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleMobileFullscreen();
+    });
+    fsBtn.addEventListener("touchstart", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleMobileFullscreen();
+    }, { passive: false });
+  }
+}
+
+function toggleMobileFullscreen() {
+  const container = document.getElementById("gameContainer");
+  if (!container) return;
+
+  const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || container.classList.contains("fake-fullscreen");
+
+  if (!isFullscreen) {
+    // Entering Fullscreen: Add class for CSS fallback, then try native fullscreen
+    container.classList.add("fake-fullscreen");
+    
+    const reqFullscreen = container.requestFullscreen || container.webkitRequestFullscreen || container.msRequestFullscreen;
+    if (reqFullscreen) {
+      reqFullscreen.call(container).then(() => {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch((err) => {
+            console.warn("Screen orientation landscape lock failed:", err);
+          });
+        }
+      }).catch((err) => {
+        console.warn("Native fullscreen request rejected, using CSS fake-fullscreen:", err);
+      });
+    }
+  } else {
+    // Exiting Fullscreen: Remove CSS class, then exit native fullscreen if active
+    container.classList.remove("fake-fullscreen");
+    
+    const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (exitFullscreen && (document.fullscreenElement || document.webkitFullscreenElement)) {
+      exitFullscreen.call(document);
+    }
+    
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+  }
+
+  // Force trigger resize event so canvas redraws and fits its new boundary
+  setTimeout(() => {
+    window.dispatchEvent(new Event("resize"));
+  }, 100);
+}
+
+function updateMobileControlsVisibility() {
+  const controlsEl = document.getElementById("mobileTouchControls");
+  const victoryOverlay = document.getElementById("victoryOverlay");
+  if (!controlsEl) return;
+
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  const playOverlay = document.getElementById("playOverlay");
+  const isOverlayHidden = playOverlay ? playOverlay.classList.contains("hidden") : true;
+  const isEmpowered = (typeof golemEmpowered !== "undefined" && golemEmpowered);
+
+  if (gameStarted && isTouch && isOverlayHidden && !papyrusOpen && !isEmpowered) {
+    controlsEl.style.display = "flex";
+  } else {
+    controlsEl.style.display = "none";
+  }
+
+  // Dynamic opacity and pointer events to hide music Select and mute button when overlays open!
+  const musicSelect = document.getElementById("musicSelect");
+  const muteBtn = document.getElementById("muteBtn");
+  if (isEmpowered || papyrusOpen) {
+    if (musicSelect) { musicSelect.style.opacity = "0"; musicSelect.style.pointerEvents = "none"; }
+    if (muteBtn) { muteBtn.style.opacity = "0"; muteBtn.style.pointerEvents = "none"; }
+  } else {
+    if (musicSelect) { musicSelect.style.opacity = "1"; musicSelect.style.pointerEvents = "auto"; }
+    if (muteBtn) { muteBtn.style.opacity = "1"; muteBtn.style.pointerEvents = "auto"; }
+  }
+
+  if (victoryOverlay) {
+    if (gameStarted && isEmpowered) {
+      victoryOverlay.classList.remove("hidden");
+    } else {
+      victoryOverlay.classList.add("hidden");
+    }
+  }
+}
+
+// Robust native fullscreen change event hooks to sync with fake-fullscreen class
+document.addEventListener("fullscreenchange", () => {
+  const container = document.getElementById("gameContainer");
+  if (!container) return;
+  if (!document.fullscreenElement) {
+    container.classList.remove("fake-fullscreen");
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+    window.dispatchEvent(new Event("resize"));
+  }
+});
+document.addEventListener("webkitfullscreenchange", () => {
+  const container = document.getElementById("gameContainer");
+  if (!container) return;
+  if (!document.webkitFullscreenElement) {
+    container.classList.remove("fake-fullscreen");
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+    window.dispatchEvent(new Event("resize"));
+  }
+});
